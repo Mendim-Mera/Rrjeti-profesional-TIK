@@ -1,104 +1,405 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="sq">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ORARI MËSIMOR</title>
-<meta name="description" content="Orari mësimor 2026–2027 · Gjimnazi &quot;Said Najdeni&quot;, Peshkopi">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Gjimnazi &quot;Said Najdeni&quot;">
-<meta property="og:title" content="ORARI MËSIMOR">
-<meta property="og:description" content="Gjimnazi &quot;Said Najdeni&quot; · Viti shkollor 2026–2027">
-<meta property="og:url" content="https://mendim-mera.github.io/ORARI-MESIMOR/">
-<meta property="og:image" content="https://mendim-mera.github.io/ORARI-MESIMOR/stema.jpg">
-<meta property="og:image:width" content="445">
-<meta property="og:image:height" content="445">
-<meta name="twitter:card" content="summary">
-<link rel="icon" type="image/jpeg" href="stema.jpg">
-<link rel="apple-touch-icon" href="stema.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rrjeti Profesional TIK – Trajnimet Mujore</title>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0c0e14;--surface:#141720;--surface2:#1c1f2d;
-  --border:rgba(255,255,255,0.09);
-  --gold:#f0b429;--gold-dim:rgba(240,180,41,0.13);--gold-glow:rgba(240,180,41,0.28);
-  --teal:#38d9d0;--teal-dim:rgba(56,217,208,0.11);--teal-glow:rgba(56,217,208,0.3);
-  --text:#eceaf4;--text-dim:#9b98aa;--text-faint:#5a5870;
-}
-html{scroll-behavior:smooth}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
-body::before{content:'';position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(240,180,41,0.06) 0%,transparent 70%);pointer-events:none}
-.page{position:relative;width:100%;max-width:820px;padding:40px 18px}
-.hdr{text-align:center;margin-bottom:34px;animation:fadeDown .5s ease both}
-.logo{width:40px;height:40px;border-radius:50%;display:block;margin:0 auto 18px;box-shadow:0 0 0 3px rgba(255,255,255,.08),0 8px 30px rgba(0,0,0,.45)}
-.school{font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px}
-.badge{display:inline-flex;background:var(--gold-dim);border:1px solid var(--gold-glow);color:var(--gold);font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;padding:5px 15px;border-radius:20px;margin-bottom:16px}
-h1{font-size:clamp(26px,6vw,40px);font-weight:800;letter-spacing:-.5px;margin-bottom:10px}
-.hdr p{font-size:15px;color:var(--text-dim);line-height:1.6}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 24px;transition:transform .2s,border-color .2s,box-shadow .2s,background .2s;animation:fadeUp .5s ease both}
-.card:nth-child(2){animation-delay:.1s}
-.card:hover,.card:focus-visible{transform:translateY(-4px);outline:none}
-.card.a:hover,.card.a:focus-visible{border-color:var(--gold-glow);box-shadow:0 10px 40px rgba(240,180,41,.12);background:var(--surface2)}
-.card.b:hover,.card.b:focus-visible{border-color:var(--teal-glow);box-shadow:0 10px 40px rgba(56,217,208,.1);background:var(--surface2)}
-.ico{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:6px}
-.a .ico{background:var(--gold-dim);border:1px solid var(--gold-glow)}
-.b .ico{background:var(--teal-dim);border:1px solid var(--teal-glow)}
-.card h2{font-size:22px;font-weight:700;line-height:1.2}
-.card .days{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.5px}
-.a .days{color:var(--gold)}.b .days{color:var(--teal)}
-.card p{font-size:14px;color:var(--text-dim);line-height:1.55;flex:1}
-.go{font-size:14px;font-weight:600;margin-top:6px}
-.a .go{color:var(--gold)}.b .go{color:var(--teal)}
-footer{text-align:center;margin-top:40px;color:var(--text-faint);font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1.5px;opacity:.6}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@media(max-width:600px){
-  body{min-height:100vh;min-height:100dvh}
-  .page{padding:14px 12px}
-  .hdr{margin-bottom:14px}
-  .logo{width:32px;height:32px;margin-bottom:8px}
-  .school{font-size:13px;margin-bottom:8px}
-  .badge{font-size:9px;letter-spacing:1.5px;padding:4px 11px;margin-bottom:8px}
-  h1{font-size:24px;margin-bottom:4px}
-  .hdr p{font-size:13px;line-height:1.3}
-  .cards{grid-template-columns:1fr;gap:10px}
-  .card{flex-direction:row;align-items:center;gap:12px;padding:14px;border-radius:14px}
-  .ico{width:42px;height:42px;font-size:20px;margin-bottom:0;flex-shrink:0;border-radius:11px}
-  .card h2{font-size:16px;flex:1}
-  .go{font-size:13px;margin-top:0;white-space:nowrap}
-  footer{margin-top:14px;font-size:9px}
-}
-@media(max-width:600px) and (max-height:620px){
-  .logo{display:none}
-  .card{padding:10px 12px}
-  .hdr{margin-bottom:10px}
-}
+  :root{--bg:#f4f6fb;--card:#fff;--ink:#1d2433;--muted:#667085;--brand:#2457d6;--brand2:#e8eefc;--line:#e1e6ef;--ok:#16794c;--err:#b42318}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:linear-gradient(135deg,#1c3f9e,#2457d6);color:#fff;padding:22px 16px}
+  header .wrap{max-width:900px;margin:auto}
+  header h1{margin:0;font-size:1.35rem}
+  header p{margin:4px 0 0;opacity:.85;font-size:.92rem}
+  nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  nav .wrap{max-width:900px;margin:auto;display:flex;gap:4px;padding:0 8px;overflow-x:auto}
+  nav button{border:0;background:none;padding:14px 14px;font-size:.95rem;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+  nav button.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+  main{max-width:900px;margin:18px auto;padding:0 12px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(16,24,40,.04)}
+  h2{margin:0 0 12px;font-size:1.15rem}
+  h3{margin:18px 0 8px;font-size:1rem}
+  label{display:block;font-size:.88rem;font-weight:600;margin:12px 0 4px}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cfd6e4;border-radius:9px;font-size:1rem;font-family:inherit;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:2px solid #b9ccf8;border-color:var(--brand)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){.row{grid-template-columns:1fr}}
+  button.btn{background:var(--brand);color:#fff;border:0;border-radius:9px;padding:11px 18px;font-size:1rem;cursor:pointer;font-weight:600}
+  button.btn:disabled{opacity:.55;cursor:wait}
+  button.btn.sec{background:var(--brand2);color:var(--brand)}
+  button.btn.danger{background:#fde8e6;color:var(--err)}
+  button.sm{padding:6px 10px;font-size:.82rem;border-radius:7px}
+  .sigbox{border:2px dashed #aab6d3;border-radius:10px;background:#fcfdff;touch-action:none;position:relative}
+  canvas{display:block;width:100%;height:180px;touch-action:none;cursor:crosshair}
+  .sighint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#a2acc2;pointer-events:none;font-size:.95rem}
+  .msg{padding:10px 12px;border-radius:9px;margin-top:12px;font-size:.92rem}
+  .msg.ok{background:#e7f6ee;color:var(--ok)}
+  .msg.err{background:#fde8e6;color:var(--err)}
+  .msg.info{background:var(--brand2);color:#1b3a8f}
+  .muted{color:var(--muted);font-size:.88rem}
+  .hidden{display:none!important}
+  table{width:100%;border-collapse:collapse;font-size:.92rem}
+  th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
+  th{font-size:.8rem;text-transform:uppercase;color:var(--muted);letter-spacing:.03em}
+  td img{height:44px;background:#fff;border:1px solid var(--line);border-radius:4px}
+  .tablewrap{overflow-x:auto}
+  .mat{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+  .mat:last-child{border-bottom:0}
+  .mat a.open{white-space:nowrap;text-decoration:none;background:var(--brand2);color:var(--brand);padding:8px 14px;border-radius:8px;font-weight:600;font-size:.9rem}
+  .mat strong{display:block}
+  .pill{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--brand2);color:var(--brand);margin-left:6px}
+  .pill.closed{background:#eee;color:#666}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  #printHead{display:none}
+  @media print{
+    header,nav,.noprint,.card:not(#attCard){display:none!important}
+    body{background:#fff}
+    #attCard{border:0;box-shadow:none;padding:0}
+    #printHead{display:block;margin-bottom:12px}
+    td img{height:50px;border:0}
+    th,td{border:1px solid #999}
+  }
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="hdr">
-    <img class="logo" src="stema.jpg" alt="Stema e Gjimnazit &quot;Said Najdeni&quot;">
-    <div class="school">Gjimnazi &quot;Said Najdeni&quot; &middot; Peshkopi</div>
-    <div class="badge">&#9670; Viti Akademik 2026–2027 &#9670;</div>
-    <h1>ORARI MËSIMOR</h1>
-    <p>Zgjidh orarin që të duhet.</p>
+
+<header>
+  <div class="wrap">
+    <h1>Rrjeti Profesional TIK</h1>
+    <p>Trajnimi mujor – prezenca dhe materialet</p>
   </div>
-  <div class="cards">
-    <a class="card a" href="orari_dita.html">
-      <div class="ico">&#128197;</div>
-      <h2>Orari i ditës</h2>
-      <div class="go">Hap orarin &rarr;</div>
-    </a>
-    <a class="card b" href="orari_kp.html">
-      <div class="ico">&#128338;</div>
-      <h2>Orari i kohës së pjesshme</h2>
-      <div class="go">Hap orarin &rarr;</div>
-    </a>
+</header>
+
+<nav>
+  <div class="wrap">
+    <button class="active" data-tab="prezenca">Prezenca</button>
+    <button data-tab="materialet">Materialet</button>
+    <button data-tab="admin">Administrimi</button>
   </div>
-  <footer>&#9670; ORARI MËSIMOR 2026–2027 &#9670;</footer>
-</div>
+</nav>
+
+<main>
+  <div id="cfgWarn" class="card hidden">
+    <div class="msg err"><strong>Faqja nuk është konfiguruar ende.</strong> Hape skedarin <code>index.html</code> dhe plotëso <code>firebaseConfig</code> dhe <code>ADMIN_EMAIL</code> (shih README.md).</div>
+  </div>
+
+  <!-- PREZENCA -->
+  <section id="view-prezenca">
+    <div class="card">
+      <h2>Formulari i prezencës</h2>
+      <div id="noSession" class="msg info hidden">Aktualisht nuk ka asnjë trajnim të hapur për regjistrim prezence.</div>
+      <form id="attForm" class="hidden" autocomplete="off">
+        <label for="fSession">Trajnimi</label>
+        <select id="fSession" required></select>
+        <label for="fName">Emri dhe mbiemri *</label>
+        <input id="fName" required maxlength="80" placeholder="p.sh. Arben Hoxha">
+        <div class="row">
+          <div><label for="fSchool">Shkolla / Institucioni *</label><input id="fSchool" required maxlength="100"></div>
+          <div><label for="fCity">Qyteti / Bashkia</label><input id="fCity" maxlength="60"></div>
+        </div>
+        <label for="fEmail">Email (opsionale)</label>
+        <input id="fEmail" type="email" maxlength="80">
+        <label>Firma *</label>
+        <div class="sigbox"><canvas id="sig"></canvas><div class="sighint" id="sigHint">Firosni këtu me gisht ose mouse</div></div>
+        <div class="actions"><button type="button" class="btn sec sm" id="sigClear">Fshij firmën</button></div>
+        <label style="font-weight:400;display:flex;gap:8px;align-items:flex-start">
+          <input type="checkbox" id="fConsent" style="width:auto;margin-top:5px" required>
+          <span>Konfirmoj se isha prezent në këtë trajnim dhe pranoj që emri dhe firma ime të ruhen për evidencën e prezencës.</span>
+        </label>
+        <div style="margin-top:14px"><button class="btn" id="fSubmit" type="submit">Dërgo prezencën</button></div>
+        <div id="fMsg"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- MATERIALET -->
+  <section id="view-materialet" class="hidden">
+    <div class="card">
+      <h2>Materialet e trajnimeve</h2>
+      <input id="matSearch" placeholder="Kërko në materiale…">
+      <div id="matList" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="view-admin" class="hidden">
+    <div id="loginCard" class="card">
+      <h2>Hyrje për drejtuesin</h2>
+      <form id="loginForm">
+        <label for="lEmail">Email</label><input id="lEmail" type="email" required>
+        <label for="lPass">Fjalëkalimi</label><input id="lPass" type="password" required>
+        <div style="margin-top:14px"><button class="btn" type="submit">Hyr</button></div>
+        <div id="lMsg"></div>
+      </form>
+    </div>
+
+    <div id="adminArea" class="hidden">
+      <div class="card noprint">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h2 style="margin:0">Paneli i drejtuesit</h2>
+          <button class="btn sec sm" id="logoutBtn">Dil</button>
+        </div>
+      </div>
+
+      <div class="card noprint">
+        <h2>Trajnimet</h2>
+        <form id="sesForm">
+          <div class="row">
+            <div><label for="sDate">Data e trajnimit</label><input id="sDate" type="date" required></div>
+            <div><label for="sTitle">Titulli / Tema</label><input id="sTitle" required maxlength="120" placeholder="p.sh. Trajnimi i nëntorit – AI në mësimdhënie"></div>
+          </div>
+          <div style="margin-top:12px"><button class="btn" type="submit">Krijo trajnim (i hapur për prezencë)</button></div>
+        </form>
+        <div id="sesList" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card" id="attCard">
+        <div id="printHead"></div>
+        <h2 class="noprint">Lista e prezencës</h2>
+        <select id="attSession" class="noprint"></select>
+        <div class="actions noprint">
+          <button class="btn sec sm" id="attPrint">Printo / Ruaj PDF</button>
+          <button class="btn sec sm" id="attCsv">Shkarko CSV</button>
+        </div>
+        <p class="muted noprint" id="attCount"></p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>#</th><th>Emri</th><th>Shkolla</th><th>Qyteti</th><th>Firma</th><th class="noprint"></th></tr></thead>
+          <tbody id="attBody"></tbody>
+        </table></div>
+      </div>
+
+      <div class="card noprint">
+        <h2>Shto material</h2>
+        <form id="matForm">
+          <div class="row">
+            <div><label for="mTitle">Titulli *</label><input id="mTitle" required maxlength="120"></div>
+            <div><label for="mMonth">Muaji *</label><input id="mMonth" type="month" required></div>
+          </div>
+          <label for="mUrl">Lidhja (Google Drive, YouTube, ose rruga e skedarit, p.sh. materials/nentor.pdf) *</label>
+          <input id="mUrl" required placeholder="https://…">
+          <label for="mDesc">Përshkrim (opsionale)</label>
+          <textarea id="mDesc" rows="2" maxlength="300"></textarea>
+          <div style="margin-top:12px"><button class="btn" type="submit">Shto materialin</button></div>
+          <div id="mMsg"></div>
+        </form>
+        <h3>Materialet ekzistuese</h3>
+        <div id="matAdminList"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,collection,addDoc,getDocs,query,where,deleteDoc,updateDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+/* ============ KONFIGURIMI – PLOTËSO KËTU ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDmgon14YJIHr61bvtZ1hQ421LfidnxmKY",
+  authDomain: "rrjeti-profesional-tik.firebaseapp.com",
+  projectId: "rrjeti-profesional-tik",
+  storageBucket: "rrjeti-profesional-tik.firebasestorage.app",
+  messagingSenderId: "765672918027",
+  appId: "1:765672918027:web:bf3d7b0baafcc46a544b0e",
+  measurementId: "G-ZS0DNQ2RQM"
+};
+const ADMIN_EMAIL = "mendim.mera@gmail.com";
+/* ===================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MONTHS = ["Janar","Shkurt","Mars","Prill","Maj","Qershor","Korrik","Gusht","Shtator","Tetor","Nëntor","Dhjetor"];
+const fmtDate = d => { if(!d) return ""; const [y,m,da]=d.split("-"); return `${da}.${m}.${y}`; };
+const fmtMonth = ym => { const [y,m]=ym.split("-"); return `${MONTHS[+m-1]} ${y}`; };
+const flash = (el,text,type="ok") => { el.innerHTML = `<div class="msg ${type}">${esc(text)}</div>`; };
+
+const configured = !firebaseConfig.apiKey.includes("ZËVENDËSO");
+if(!configured) $("#cfgWarn").classList.remove("hidden");
+let db, auth;
+if(configured){ const app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); }
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x===b));
+  ["prezenca","materialet","admin"].forEach(t => $("#view-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+  if(b.dataset.tab==="materialet") loadMaterials();
+});
+
+/* ---------- Signature pad ---------- */
+const canvas = $("#sig"), ctx = canvas.getContext("2d");
+let drawing=false, hasInk=false, lastW=0;
+function sizeCanvas(){
+  const r = canvas.getBoundingClientRect(); if(!r.width || r.width===lastW) return;
+  lastW = r.width; const dpr = window.devicePixelRatio||1;
+  canvas.width = Math.round(r.width*dpr); canvas.height = Math.round(r.height*dpr);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.lineWidth=2.2*dpr; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.strokeStyle="#111";
+  hasInk=false; $("#sigHint").classList.remove("hidden");
+}
+/* koordinatat llogariten sipas madhësisë reale të kanavacës, pra janë gjithmonë të sakta */
+function pos(e){
+  const r=canvas.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*canvas.width/r.width, y:(e.clientY-r.top)*canvas.height/r.height};
+}
+/* përshtat kanavacën sa herë që bëhet e dukshme ose ndryshon madhësia (p.sh. kur ndërrohet skeda) */
+new ResizeObserver(sizeCanvas).observe(canvas);
+canvas.addEventListener("pointerdown", e => { drawing=true; canvas.setPointerCapture(e.pointerId); const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+.1,p.y+.1); ctx.stroke(); hasInk=true; $("#sigHint").classList.add("hidden"); });
+canvas.addEventListener("pointermove", e => { if(!drawing) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); });
+["pointerup","pointercancel","pointerleave"].forEach(ev => canvas.addEventListener(ev, () => drawing=false));
+function clearSig(){ lastW=0; sizeCanvas(); }
+$("#sigClear").onclick = clearSig;
+window.addEventListener("resize", sizeCanvas);
+function sigData(){
+  const w=500, h=Math.round(500*canvas.height/canvas.width);
+  const t=document.createElement("canvas"); t.width=w; t.height=h;
+  const c=t.getContext("2d"); c.fillStyle="#fff"; c.fillRect(0,0,w,h); c.drawImage(canvas,0,0,w,h);
+  return t.toDataURL("image/png");
+}
+
+/* ---------- Teachers: sessions + attendance ---------- */
+let openSessions = [];
+async function loadOpenSessions(){
+  if(!configured) return;
+  const snap = await getDocs(collection(db,"sessions"));
+  openSessions = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.open).sort((a,b)=>b.date.localeCompare(a.date));
+  const has = openSessions.length>0;
+  $("#attForm").classList.toggle("hidden",!has);
+  $("#noSession").classList.toggle("hidden",has);
+  $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}</option>`).join("");
+  if(has) setTimeout(sizeCanvas,50);
+}
+$("#attForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg=$("#fMsg"), btn=$("#fSubmit");
+  if(!hasInk) return flash(msg,"Ju lutem vendosni firmën tuaj.","err");
+  const s = openSessions.find(x=>x.id===$("#fSession").value);
+  const key = "att_"+s.id+"_"+$("#fName").value.trim().toLowerCase();
+  if(localStorage.getItem(key)) return flash(msg,"Prezenca për këtë emër është dërguar tashmë në këtë pajisje.","err");
+  btn.disabled=true;
+  try{
+    await addDoc(collection(db,"attendance"),{
+      sessionId:s.id, sessionTitle:s.title, sessionDate:s.date,
+      name:$("#fName").value.trim(), school:$("#fSchool").value.trim(),
+      city:$("#fCity").value.trim(), email:$("#fEmail").value.trim(),
+      signature:sigData(), createdAt:serverTimestamp()
+    });
+    localStorage.setItem(key,"1");
+    $("#attForm").reset(); clearSig();
+    flash(msg,"Faleminderit! Prezenca u regjistrua me sukses.","ok");
+  }catch(err){ console.error(err); flash(msg,"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
+  btn.disabled=false;
+});
+
+/* ---------- Materials (public view) ---------- */
+let allMaterials=[];
+async function fetchMaterials(){
+  const snap = await getDocs(collection(db,"materials"));
+  allMaterials = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.month||"").localeCompare(a.month||"") || (b.createdMs||0)-(a.createdMs||0));
+}
+function matHtml(m, admin){
+  return `<div class="mat"><div><strong>${esc(m.title)}</strong>${m.desc?`<span class="muted">${esc(m.desc)}</span>`:""}</div>
+  <div style="display:flex;gap:6px;align-items:center">${admin?`<button class="btn danger sm" data-delmat="${m.id}">Fshij</button>`:""}<a class="open" href="${esc(m.url)}" target="_blank" rel="noopener">Hap</a></div></div>`;
+}
+function renderMaterials(){
+  const q = $("#matSearch").value.trim().toLowerCase();
+  const list = allMaterials.filter(m => !q || (m.title+" "+(m.desc||"")+" "+fmtMonth(m.month)).toLowerCase().includes(q));
+  if(!list.length){ $("#matList").innerHTML = `<p class="muted">Nuk ka materiale për t'u shfaqur.</p>`; return; }
+  const groups={}; list.forEach(m=>(groups[m.month]??=[]).push(m));
+  $("#matList").innerHTML = Object.keys(groups).sort().reverse().map(k=>`<h3>${fmtMonth(k)}</h3>${groups[k].map(m=>matHtml(m,false)).join("")}`).join("");
+}
+async function loadMaterials(){
+  if(!configured) return;
+  $("#matList").innerHTML = `<p class="muted">Duke ngarkuar…</p>`;
+  await fetchMaterials(); renderMaterials(); renderAdminMaterials();
+}
+$("#matSearch").addEventListener("input", renderMaterials);
+
+/* ---------- Admin ---------- */
+if(configured) onAuthStateChanged(auth, user => {
+  const ok = user && user.email && user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+  $("#loginCard").classList.toggle("hidden", !!ok);
+  $("#adminArea").classList.toggle("hidden", !ok);
+  if(ok) loadAdmin();
+});
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  try{ await signInWithEmailAndPassword(auth,$("#lEmail").value.trim(),$("#lPass").value); }
+  catch{ flash($("#lMsg"),"Email ose fjalëkalim i pasaktë.","err"); }
+});
+$("#logoutBtn").onclick = () => signOut(auth);
+
+let allSessions=[], currentAtt=[];
+async function loadAdmin(){
+  await Promise.all([loadSessionsAdmin(), fetchMaterials().then(renderAdminMaterials)]);
+  if(!$("#sDate").value) $("#sDate").value = new Date().toISOString().slice(0,10);
+}
+async function loadSessionsAdmin(){
+  const snap = await getDocs(collection(db,"sessions"));
+  allSessions = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
+  $("#sesList").innerHTML = allSessions.length ? allSessions.map(s=>`
+    <div class="mat"><div><strong>${fmtDate(s.date)} – ${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span></strong></div>
+    <div style="display:flex;gap:6px"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
+    : `<p class="muted">Ende nuk keni krijuar trajnime.</p>`;
+  const prev = $("#attSession").value;
+  $("#attSession").innerHTML = allSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}</option>`).join("");
+  if(prev && allSessions.some(s=>s.id===prev)) $("#attSession").value = prev;
+  await loadAttendance();
+  loadOpenSessions();
+}
+$("#sesForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  await addDoc(collection(db,"sessions"),{date:$("#sDate").value,title:$("#sTitle").value.trim(),open:true,createdAt:serverTimestamp()});
+  $("#sTitle").value=""; loadSessionsAdmin();
+});
+$("#sesList").addEventListener("click", async e => {
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.toggle){ const s=allSessions.find(x=>x.id===t.dataset.toggle); await updateDoc(doc(db,"sessions",s.id),{open:!s.open}); loadSessionsAdmin(); }
+  if(t.dataset.delses && confirm("Të fshihet trajnimi? (Prezencat e regjistruara NUk fshihen.)")){ await deleteDoc(doc(db,"sessions",t.dataset.delses)); loadSessionsAdmin(); }
+});
+
+async function loadAttendance(){
+  const id=$("#attSession").value;
+  if(!id){ $("#attBody").innerHTML=""; $("#attCount").textContent=""; return; }
+  const snap = await getDocs(query(collection(db,"attendance"),where("sessionId","==",id)));
+  currentAtt = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+  const s = allSessions.find(x=>x.id===id);
+  $("#attCount").textContent = `${currentAtt.length} mësues pjesëmarrës`;
+  $("#printHead").innerHTML = `<h2>Lista e prezencës – ${esc(s?.title)}</h2><p>Data: ${fmtDate(s?.date)} · Pjesëmarrës: ${currentAtt.length}</p>`;
+  $("#attBody").innerHTML = currentAtt.map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.name)}</td><td>${esc(a.school)}</td><td>${esc(a.city)}</td><td><img src="${esc(a.signature)}" alt="firma"></td><td class="noprint"><button class="btn danger sm" data-delatt="${a.id}">✕</button></td></tr>`).join("");
+}
+$("#attSession").addEventListener("change", loadAttendance);
+$("#attBody").addEventListener("click", async e => {
+  const t=e.target.closest("[data-delatt]"); if(!t) return;
+  if(confirm("Të fshihet kjo prezencë?")){ await deleteDoc(doc(db,"attendance",t.dataset.delatt)); loadAttendance(); }
+});
+$("#attPrint").onclick = () => window.print();
+$("#attCsv").onclick = () => {
+  const rows=[["Nr","Emri","Shkolla","Qyteti","Email","Koha"]].concat(currentAtt.map((a,i)=>[i+1,a.name,a.school,a.city,a.email,a.createdAt?new Date(a.createdAt.seconds*1000).toLocaleString("sq-AL"):""]));
+  const csv="\ufeff"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="prezenca.csv"; a.click();
+};
+
+/* ---------- Admin: materials ---------- */
+function renderAdminMaterials(){
+  $("#matAdminList").innerHTML = allMaterials.length ? allMaterials.map(m=>`<div class="muted" style="margin-top:8px">${fmtMonth(m.month)}</div>${matHtml(m,true)}`).join("") : `<p class="muted">Asnjë material ende.</p>`;
+}
+$("#matForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  let url=$("#mUrl").value.trim();
+  if(/^javascript:/i.test(url)) return flash($("#mMsg"),"Lidhje e pavlefshme.","err");
+  await addDoc(collection(db,"materials"),{title:$("#mTitle").value.trim(),month:$("#mMonth").value,url,desc:$("#mDesc").value.trim(),createdMs:Date.now()});
+  $("#matForm").reset(); flash($("#mMsg"),"Materiali u shtua.","ok");
+  await fetchMaterials(); renderAdminMaterials();
+});
+$("#matAdminList").addEventListener("click", async e => {
+  const t=e.target.closest("[data-delmat]"); if(!t) return;
+  if(confirm("Të fshihet materiali?")){ await deleteDoc(doc(db,"materials",t.dataset.delmat)); await fetchMaterials(); renderAdminMaterials(); }
+});
+
+/* ---------- Start ---------- */
+loadOpenSessions();
+</script>
 </body>
 </html>
