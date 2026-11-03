@@ -128,6 +128,20 @@
   th{font-size:.72rem;text-transform:uppercase;color:var(--muted);letter-spacing:.06em;white-space:nowrap}
   td img{height:46px;background:#fff;border:1px solid var(--line);border-radius:6px;display:block}
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+  .chip{position:relative;display:block;margin:0;font-weight:inherit}
+  .chip input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+  .chip span{display:inline-block;padding:10px 16px;border-radius:99px;border:1.5px solid #d6dcec;background:#fbfcff;font-size:.9rem;font-weight:600;cursor:pointer;transition:.15s}
+  .chip input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chip input:focus-visible+span{box-shadow:0 0 0 4px rgba(59,91,219,.18)}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;background:var(--brand-l);color:var(--brand);padding:2px 10px;border-radius:99px;margin-top:6px}
+  .filters{display:flex;gap:8px;overflow-x:auto;padding:4px 2px;margin-top:10px;-webkit-overflow-scrolling:touch}
+  .filters button{flex:none;border:1.5px solid #d6dcec;background:#fff;color:#4a5578;padding:8px 15px;border-radius:99px;font:600 .82rem "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}
+  .filters button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .bar{height:8px;border-radius:99px;background:#e8ecf7;overflow:hidden;margin:4px 0 10px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--accent))}
+  .note{font-size:.8rem;color:var(--muted);margin-top:12px;line-height:1.5}
+  input.small{width:78px;padding:8px 10px;border-radius:10px}
   #printHead{display:none}
   @page{size:A4 landscape;margin:12mm}
   @media print{
@@ -206,7 +220,7 @@
           <div class="ftitle"><i>4</i>Kontakti</div>
           <div class="row">
             <div><label for="fEmail">E-mail <b>*</b></label><input id="fEmail" type="email" required maxlength="80" autocomplete="email" inputmode="email" placeholder="emri@shembull.com"></div>
-            <div><label for="fPhone">Cel <b>*</b></label><input id="fPhone" type="tel" required minlength="8" maxlength="20" pattern="[0-9+\s\-()]{8,20}" autocomplete="tel" inputmode="tel" placeholder="06X XXX XXXX"></div>
+            <div><label for="fPhone">Cel <b>*</b></label><input id="fPhone" type="tel" required minlength="8" maxlength="20" pattern="[0-9+ \-]{8,20}" title="Shkruani një numër telefoni të vlefshëm (shifra, hapësira, + ose -)" autocomplete="tel" inputmode="tel" placeholder="06X XXX XXXX"></div>
           </div>
         </div>
 
@@ -224,11 +238,27 @@
 
         <label class="check">
           <input type="checkbox" id="fConsent" required>
-          <span>Konfirmoj se isha prezent në këtë trajnim dhe pranoj që të dhënat dhe firma ime të ruhen për evidencën e prezencës.</span>
+          <span>Konfirmoj se isha prezent në këtë trajnim. Pranoj që emri, kontakti dhe firma ime të ruhen nga drejtuesi i rrjetit vetëm për evidencën e prezencës dhe vlerësimin me kredite, sipas Ligjit nr. 124/2024 "Për mbrojtjen e të dhënave personale".</span>
         </label>
         <button class="btn block" id="fSubmit" type="submit">Dërgo prezencën</button>
         <div id="fMsg"></div>
+        <p class="note">🔒 Të dhënat shihen vetëm nga drejtuesi i rrjetit dhe ruhen vetëm për periudhën e nevojshme të vlerësimit me kredite dhe arkivimit.</p>
       </form>
+    </div>
+
+    <div class="card hidden" id="evalCard">
+      <h2>Vlerëso trajnimin</h2>
+      <p class="sub">Opsionale dhe anonime. Na ndihmon ta përmirësojmë rrjetin.</p>
+      <form id="evalForm">
+        <div id="eQs"></div>
+        <label for="eImprove">Çfarë duhet përmirësuar në funksionimin e rrjetit?</label>
+        <textarea id="eImprove" rows="2" maxlength="800"></textarea>
+        <label for="eTopics">Sugjerime për tematika të ardhshme</label>
+        <textarea id="eTopics" rows="2" maxlength="800"></textarea>
+        <button class="btn block" type="submit">Dërgo vlerësimin</button>
+        <div id="eMsg"></div>
+      </form>
+      <div id="evalThanks" class="empty hidden"><span class="ico">🙏</span>Faleminderit për vlerësimin!</div>
     </div>
   </section>
 
@@ -241,6 +271,7 @@
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="matSearch" type="search" placeholder="Kërko në materiale…" aria-label="Kërko">
       </div>
+      <div class="filters" id="matFilters"></div>
       <div id="matList"></div>
     </div>
   </section>
@@ -272,6 +303,10 @@
             <div><label for="sDate">Data e trajnimit</label><input id="sDate" type="date" required></div>
             <div><label for="sTitle">Titulli / Tema</label><input id="sTitle" required maxlength="120" placeholder="p.sh. Trajnimi i nëntorit"></div>
           </div>
+          <div class="row">
+            <div><label for="sVenue">Vendi / Platforma</label><input id="sVenue" required maxlength="100" placeholder="p.sh. Shkolla … ose Zoom"></div>
+            <div><label for="sHours">Kohëzgjatja (orë)</label><input id="sHours" type="number" required min="0.5" max="8" step="0.5" value="2"></div>
+          </div>
           <button class="btn block" type="submit">Krijo trajnim</button>
         </form>
         <div id="sesMsg"></div>
@@ -285,12 +320,36 @@
         <select id="attSession" class="noprint"></select>
         <div class="actions noprint">
           <button class="btn sec sm" id="attPrint">🖨 Printo / Ruaj PDF</button>
-          <button class="btn sec sm" id="attCsv">⬇ Shkarko CSV</button>
+          <button class="btn sec sm" id="attXlsx">⬇ Shkarko Excel</button>
+          <button class="btn danger sm" id="attWipe">🗑 Fshi prezencat e trajnimit</button>
         </div>
         <div class="tablewrap"><table>
-          <thead><tr><th>#</th><th>Emri</th><th>Mbiemri</th><th>Institucioni</th><th>Cikli</th><th>E-mail</th><th>Cel</th><th>Nënshkrimi</th><th class="noprint"></th></tr></thead>
+          <thead><tr><th>#</th><th>Emri</th><th>Mbiemri</th><th>Institucioni</th><th>Cikli</th><th>E-mail</th><th>Cel</th><th>Nënshkrimi</th><th class="noprint">Referim (orë)</th><th class="noprint"></th></tr></thead>
           <tbody id="attBody"></tbody>
         </table></div>
+      </div>
+
+      <div class="card noprint">
+        <h2>Vlerësimet e mësuesve</h2>
+        <p class="sub" id="evalCount">Për trajnimin e zgjedhur më lart.</p>
+        <div id="evalBox"></div>
+      </div>
+
+      <div class="card noprint">
+        <h2>Kreditet vjetore</h2>
+        <p class="sub">Raporti për ASCAP në fund të vitit shkollor.</p>
+        <label for="rYear">Viti shkollor</label>
+        <select id="rYear"></select>
+        <div class="actions">
+          <button class="btn sm" id="rGen">Gjenero raportin</button>
+          <button class="btn sec sm hidden" id="rXlsx">⬇ Shkarko Excel</button>
+          <button class="btn danger sm hidden" id="rWipe">🗑 Fshi prezencat e këtij viti</button>
+        </div>
+        <div class="tablewrap"><table style="min-width:900px">
+          <thead><tr><th>#</th><th>Emri dhe mbiemri</th><th>Institucioni</th><th>Cikli</th><th>E-mail</th><th>Takime</th><th>Orë</th><th>Orë referim</th><th>Kredite</th></tr></thead>
+          <tbody id="rBody"></tbody>
+        </table></div>
+        <p class="note" id="rNote"></p>
       </div>
 
       <div class="card noprint">
@@ -303,6 +362,9 @@
           </div>
           <label for="mUrl">Lidhja *</label>
           <input id="mUrl" required placeholder="https://… ose materials/nentor.pdf">
+          <label for="mTopic">Tematika (opsionale)</label>
+          <input id="mTopic" list="topicList" maxlength="60" placeholder="p.sh. Inteligjenca Artificiale">
+          <datalist id="topicList"></datalist>
           <label for="mDesc">Përshkrim (opsionale)</label>
           <textarea id="mDesc" rows="2" maxlength="300"></textarea>
           <button class="btn block" type="submit">Shto materialin</button>
@@ -415,6 +477,7 @@ $("#attForm").addEventListener("submit", async e => {
     localStorage.setItem(key,"1");
     $("#attForm").reset(); clearSig();
     flash(msg,"✓ Faleminderit! Prezenca u regjistrua me sukses.","ok");
+    showEval(s.id);
     msg.scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){ console.error(err); flash(msg,"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
   btn.disabled=false;
@@ -425,6 +488,7 @@ let allMaterials=[];
 async function fetchMaterials(){
   const snap = await getDocs(collection(db,"materials"));
   allMaterials = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.month||"").localeCompare(a.month||"") || (b.createdMs||0)-(a.createdMs||0));
+  updateTopicList();
 }
 function kind(url){
   const u=(url||"").toLowerCase();
@@ -440,13 +504,24 @@ const arrow = `<svg viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M8 7h9v9"
 function matHtml(m, admin){
   const [cls,emoji,label] = kind(m.url);
   const inner = `<div class="ico ${cls}">${emoji}</div>
-    <div class="tx"><strong>${esc(m.title)}</strong><small>${esc(m.desc||label)}</small></div>`;
+    <div class="tx"><strong>${esc(m.title)}</strong><small>${esc(m.desc||label)}</small>${m.topic?`<span class="tag">${esc(m.topic)}</span>`:""}</div>`;
   if(admin) return `<div class="mat">${inner}<div class="acts"><a class="btn sec sm" href="${esc(m.url)}" target="_blank" rel="noopener">Hap</a><button class="btn danger sm" data-delmat="${m.id}">Fshij</button></div></div>`;
   return `<a class="mat" href="${esc(m.url)}" target="_blank" rel="noopener">${inner}<div class="go"><span>Hap</span>${arrow}</div></a>`;
 }
+let activeTopic="";
+function renderFilters(){
+  const topics=[...new Set(allMaterials.map(m=>m.topic).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"sq"));
+  if(activeTopic && !topics.includes(activeTopic)) activeTopic="";
+  $("#matFilters").innerHTML = topics.length ? [`<button data-topic="" class="${activeTopic?"":"on"}">Të gjitha</button>`].concat(topics.map(t=>`<button data-topic="${esc(t)}" class="${t===activeTopic?"on":""}">${esc(t)}</button>`)).join("") : "";
+}
+function updateTopicList(){
+  const t=new Set(["Inteligjenca Artificiale","Metodologji mësimdhënieje","Vlerësimi","Teknologji në mësimdhënie","Menaxhim klase"].concat(allMaterials.map(m=>m.topic).filter(Boolean)));
+  $("#topicList").innerHTML=[...t].map(x=>`<option value="${esc(x)}">`).join("");
+}
 function renderMaterials(){
+  renderFilters();
   const q = $("#matSearch").value.trim().toLowerCase();
-  const list = allMaterials.filter(m => !q || (m.title+" "+(m.desc||"")+" "+fmtMonth(m.month)).toLowerCase().includes(q));
+  const list = allMaterials.filter(m => (!activeTopic || m.topic===activeTopic) && (!q || (m.title+" "+(m.desc||"")+" "+(m.topic||"")+" "+fmtMonth(m.month)).toLowerCase().includes(q)));
   if(!list.length){ $("#matList").innerHTML = `<div class="empty"><span class="ico">📚</span>Nuk ka materiale për t'u shfaqur.</div>`; return; }
   const groups={}; list.forEach(m=>(groups[m.month||""]??=[]).push(m));
   $("#matList").innerHTML = Object.keys(groups).sort().reverse().map(k=>`<div class="month"><span>${fmtMonth(k)}</span></div>${groups[k].map(m=>matHtml(m,false)).join("")}`).join("");
@@ -458,6 +533,7 @@ async function loadMaterials(){
   catch(err){ console.error(err); $("#matList").innerHTML = `<div class="msg err">Gabim gjatë ngarkimit të materialeve.</div>`; }
 }
 $("#matSearch").addEventListener("input", renderMaterials);
+$("#matFilters").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return; activeTopic=b.dataset.topic; renderMaterials(); });
 
 /* ---------- Admin ---------- */
 if(configured) onAuthStateChanged(auth, user => {
@@ -482,7 +558,7 @@ async function loadSessionsAdmin(){
   const snap = await getDocs(collection(db,"sessions"));
   allSessions = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
   $("#sesList").innerHTML = allSessions.length ? allSessions.map(s=>`
-    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span></strong><small>${fmtDate(s.date)}</small></div>
+    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span></strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë</small></div>
     <div class="acts"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
     : `<div class="empty"><span class="ico">🗓</span>Ende nuk keni krijuar trajnime.</div>`;
   const prev = $("#attSession").value;
@@ -494,7 +570,7 @@ async function loadSessionsAdmin(){
 $("#sesForm").addEventListener("submit", async e => {
   e.preventDefault();
   try{
-    await addDoc(collection(db,"sessions"),{date:$("#sDate").value,title:$("#sTitle").value.trim(),open:true,createdAt:serverTimestamp()});
+    await addDoc(collection(db,"sessions"),{date:$("#sDate").value,title:$("#sTitle").value.trim(),venue:$("#sVenue").value.trim(),hours:Number($("#sHours").value)||2,open:true,createdAt:serverTimestamp()});
     $("#sTitle").value=""; $("#sesMsg").innerHTML=""; await loadSessionsAdmin();
   }catch(err){
     console.error(err);
@@ -504,7 +580,7 @@ $("#sesForm").addEventListener("submit", async e => {
 $("#sesList").addEventListener("click", async e => {
   const t=e.target.closest("button"); if(!t) return;
   if(t.dataset.toggle){ const s=allSessions.find(x=>x.id===t.dataset.toggle); await updateDoc(doc(db,"sessions",s.id),{open:!s.open}); loadSessionsAdmin(); }
-  if(t.dataset.delses && confirm("Të fshihet trajnimi? (Prezencat e regjistruara nuk fshihen.)")){ await deleteDoc(doc(db,"sessions",t.dataset.delses)); loadSessionsAdmin(); }
+  if(t.dataset.delses && confirm("Të fshihet trajnimi? Prezencat e tij NUK fshihen automatikisht; përdor butonin \"Fshi prezencat e trajnimit\" te lista e prezencës.")){ await deleteDoc(doc(db,"sessions",t.dataset.delses)); loadSessionsAdmin(); }
 });
 
 async function loadAttendance(){
@@ -514,19 +590,51 @@ async function loadAttendance(){
   currentAtt = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
   const s = allSessions.find(x=>x.id===id);
   $("#attCount").textContent = `${currentAtt.length} mësues pjesëmarrës`;
-  $("#printHead").innerHTML = `<h2 style="margin:0">RRJETI PROFESIONAL TIK</h2><p style="margin:2px 0 0">Drejtuesi i rrjetit Mendim Mera</p><p style="margin:8px 0 0"><b>Lista e prezencës:</b> ${esc(s?.title)} · <b>Data:</b> ${fmtDate(s?.date)} · <b>Pjesëmarrës:</b> ${currentAtt.length}</p>`;
-  $("#attBody").innerHTML = currentAtt.map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.first||a.name)}</td><td>${esc(a.last||"")}</td><td>${esc(a.institution||a.city||"")}</td><td>${esc(a.cycle||"")}</td><td>${esc(a.email)}</td><td>${esc(a.phone||"")}</td><td><img src="${esc(a.signature)}" alt="firma"></td><td class="noprint"><button class="btn danger sm" data-delatt="${a.id}">✕</button></td></tr>`).join("");
+  $("#printHead").innerHTML = `<h2 style="margin:0">RRJETI PROFESIONAL TIK</h2><p style="margin:2px 0 0">Drejtuesi i rrjetit Mendim Mera</p>
+    <p style="margin:10px 0 0;line-height:1.7"><b>Lista e pjesëmarrjes</b><br><b>Emri i rrjetit:</b> Rrjeti Profesional TIK<br><b>Tema:</b> ${esc(s?.title)}<br><b>Data:</b> ${fmtDate(s?.date)} · <b>Vendi/Platforma:</b> ${esc(s?.venue||"")} · <b>Kohëzgjatja:</b> ${s?.hours||2} orë · <b>Pjesëmarrës:</b> ${currentAtt.length}</p>`;
+  loadEvals();
+  $("#attBody").innerHTML = currentAtt.map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.first||a.name)}</td><td>${esc(a.last||"")}</td><td>${esc(a.institution||a.city||"")}</td><td>${esc(a.cycle||"")}</td><td>${esc(a.email)}</td><td>${esc(a.phone||"")}</td><td><img src="${esc(a.signature)}" alt="firma"></td><td class="noprint"><input class="small" type="number" min="0" max="8" step="0.5" value="${a.refHours||0}" data-ref="${a.id}" aria-label="Orë referim"></td><td class="noprint"><button class="btn danger sm" data-delatt="${a.id}">✕</button></td></tr>`).join("");
 }
 $("#attSession").addEventListener("change", loadAttendance);
 $("#attBody").addEventListener("click", async e => {
   const t=e.target.closest("[data-delatt]"); if(!t) return;
   if(confirm("Të fshihet kjo prezencë?")){ await deleteDoc(doc(db,"attendance",t.dataset.delatt)); loadAttendance(); }
 });
+$("#attBody").addEventListener("change", async e => {
+  const t=e.target.closest("[data-ref]"); if(!t) return;
+  const v=Math.max(0,Math.min(8,Number(t.value)||0));
+  try{ await updateDoc(doc(db,"attendance",t.dataset.ref),{refHours:v}); const a=currentAtt.find(x=>x.id===t.dataset.ref); if(a) a.refHours=v; t.value=v; }
+  catch(err){ console.error(err); alert("Gabim gjatë ruajtjes së orëve të referimit."); }
+});
 $("#attPrint").onclick = () => window.print();
-$("#attCsv").onclick = () => {
-  const rows=[["Nr","Emri","Mbiemri","Institucioni arsimor","Cikli","E-mail","Cel","Koha"]].concat(currentAtt.map((a,i)=>[i+1,a.first||a.name,a.last||"",a.institution||a.city||"",a.cycle||"",a.email,a.phone||"",a.createdAt?new Date(a.createdAt.seconds*1000).toLocaleString("sq-AL"):""]));
-  const csv="﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="prezenca.csv"; a.click();
+/* ---------- Excel export (me rezervë CSV) ---------- */
+function loadXlsx(){
+  return window.XLSX ? Promise.resolve() : new Promise((res,rej)=>{
+    const sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload=res; sc.onerror=rej; document.head.appendChild(sc);
+  });
+}
+async function downloadTable(rows,filename,sheet){
+  try{
+    await loadXlsx();
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"]=rows[0].map((_,c)=>({wch:Math.min(42,Math.max(8,...rows.map(r=>String(r[c]??"").length))+2)}));
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,sheet); XLSX.writeFile(wb,filename+".xlsx");
+  }catch{
+    const csv="\ufeff"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\n");
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=filename+".csv"; a.click();
+  }
+}
+$("#attXlsx").onclick = () => {
+  const s=allSessions.find(x=>x.id===$("#attSession").value);
+  const rows=[["Nr","Emri","Mbiemri","Institucioni arsimor","Cikli","E-mail","Cel","Orë referim","Koha"]].concat(currentAtt.map((a,i)=>[i+1,a.first||a.name,a.last||"",a.institution||a.city||"",a.cycle||"",a.email,a.phone||"",a.refHours||0,a.createdAt?new Date(a.createdAt.seconds*1000).toLocaleString("sq-AL"):""]));
+  downloadTable(rows,"prezenca-"+(s?.date||"trajnim"),"Prezenca");
+};
+async function deleteAttDocs(ids){ for(const id of ids) await deleteDoc(doc(db,"attendance",id)); }
+$("#attWipe").onclick = async () => {
+  if(!currentAtt.length) return alert("Nuk ka prezenca për t'u fshirë.");
+  if(!confirm(`Do të fshihen përgjithmonë ${currentAtt.length} prezenca (emra, kontakte, firma) të këtij trajnimi. Ke shkarkuar listën? Vazhdo?`)) return;
+  try{ await deleteAttDocs(currentAtt.map(a=>a.id)); await loadAttendance(); }catch(err){ console.error(err); alert("Gabim gjatë fshirjes."); }
 };
 
 /* ---------- Admin: materials ---------- */
@@ -540,7 +648,7 @@ $("#matForm").addEventListener("submit", async e => {
   const url=$("#mUrl").value.trim();
   if(/^(javascript|data):/i.test(url)) return flash($("#mMsg"),"Lidhje e pavlefshme.","err");
   try{
-    await addDoc(collection(db,"materials"),{title:$("#mTitle").value.trim(),month:$("#mMonth").value,url,desc:$("#mDesc").value.trim(),createdMs:Date.now()});
+    await addDoc(collection(db,"materials"),{title:$("#mTitle").value.trim(),month:$("#mMonth").value,url,topic:$("#mTopic").value.trim(),desc:$("#mDesc").value.trim(),createdMs:Date.now()});
     $("#matForm").reset(); flash($("#mMsg"),"Materiali u shtua.","ok");
     await fetchMaterials(); renderAdminMaterials();
   }catch(err){ console.error(err); flash($("#mMsg"),"Gabim: "+(err.code||err.message),"err"); }
@@ -549,6 +657,78 @@ $("#matAdminList").addEventListener("click", async e => {
   const t=e.target.closest("[data-delmat]"); if(!t) return;
   if(confirm("Të fshihet materiali?")){ await deleteDoc(doc(db,"materials",t.dataset.delmat)); await fetchMaterials(); renderAdminMaterials(); }
 });
+
+/* ---------- Vlerësimi nga mësuesit ---------- */
+const EVAL_Q=[["q1","Sa i dobishëm ka qenë rrjeti për zhvillimin tuaj profesional?"],["q2","Sa të përshtatshme kanë qenë temat e trajtuara?"],["q3","Sa aktivisht jeni përfshirë në veprimtaritë e rrjetit?"]];
+const EVAL_OPT=["Shumë","Mesatarisht","Pak"];
+$("#eQs").innerHTML=EVAL_Q.map(([k,t])=>`<label>${t} <b>*</b></label><div class="chips">${EVAL_OPT.map((o,i)=>`<label class="chip"><input type="radio" name="${k}" value="${o}" ${i===0?"required":""}><span>${o}</span></label>`).join("")}</div>`).join("");
+let evalSession="";
+function showEval(id){
+  if(localStorage.getItem("eval_"+id)) return;
+  evalSession=id; $("#evalForm").classList.remove("hidden"); $("#evalThanks").classList.add("hidden"); $("#eMsg").innerHTML="";
+  $("#evalCard").classList.remove("hidden");
+}
+$("#evalForm").addEventListener("submit", async e => {
+  e.preventDefault(); const f=new FormData(e.target);
+  try{
+    await addDoc(collection(db,"evaluations"),{sessionId:evalSession,q1:f.get("q1"),q2:f.get("q2"),q3:f.get("q3"),improve:$("#eImprove").value.trim(),topics:$("#eTopics").value.trim(),createdAt:serverTimestamp()});
+    try{ localStorage.setItem("eval_"+evalSession,"1"); }catch{}
+    e.target.reset(); e.target.classList.add("hidden"); $("#evalThanks").classList.remove("hidden");
+  }catch(err){ console.error(err); flash($("#eMsg"),"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
+});
+async function loadEvals(){
+  const id=$("#attSession").value;
+  if(!id){ $("#evalBox").innerHTML=""; return; }
+  try{
+    const snap=await getDocs(query(collection(db,"evaluations"),where("sessionId","==",id)));
+    const ev=snap.docs.map(d=>d.data());
+    $("#evalCount").textContent = ev.length ? `${ev.length} vlerësime anonime për trajnimin e zgjedhur` : "Ende nuk ka vlerësime për trajnimin e zgjedhur.";
+    const bars=EVAL_Q.map(([k,t])=>{ const c=EVAL_OPT.map(o=>ev.filter(x=>x[k]===o).length);
+      return `<h3>${t}</h3>`+EVAL_OPT.map((o,i)=>`<div style="display:flex;justify-content:space-between;font-size:.88rem"><span>${o}</span><b>${c[i]}</b></div><div class="bar"><i style="width:${ev.length?c[i]*100/ev.length:0}%"></i></div>`).join(""); }).join("");
+    const txt=(k,title)=>{ const l=ev.map(x=>x[k]).filter(Boolean); return l.length?`<h3>${title}</h3>`+l.map(x=>`<div class="msg info" style="margin-top:8px">${esc(x)}</div>`).join(""):""; };
+    $("#evalBox").innerHTML = ev.length ? bars+txt("improve","Çfarë duhet përmirësuar")+txt("topics","Sugjerime për tematika") : "";
+  }catch(err){ console.error(err); $("#evalBox").innerHTML=`<div class="msg err">Nuk u ngarkuan vlerësimet (kontrollo Rules te Firestore, shih README).</div>`; }
+}
+
+/* ---------- Kreditet vjetore ---------- */
+(function initYears(){
+  const d=new Date(), y0=d.getMonth()>=8?d.getFullYear():d.getFullYear()-1;
+  $("#rYear").innerHTML=[0,1,2,3].map(i=>`<option value="${y0-i}">${y0-i}–${y0-i+1}</option>`).join("");
+})();
+let reportRows=[], reportIds=[];
+const cr=n=>String(Math.round(n*100)/100).replace(".",",");
+$("#rGen").onclick = async () => {
+  const y=Number($("#rYear").value), btn=$("#rGen"); btn.disabled=true;
+  try{
+    const snap=await getDocs(query(collection(db,"attendance"),where("sessionDate",">=",`${y}-09-01`),where("sessionDate","<=",`${y+1}-08-31`)));
+    const sm=Object.fromEntries(allSessions.map(s=>[s.id,s]));
+    const docs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.sessionDate||"").localeCompare(b.sessionDate||""));
+    reportIds=docs.map(d=>d.id); const by={};
+    docs.forEach(a=>{
+      const k=(a.email||a.name||a.id).toLowerCase();
+      const r=by[k]??={name:"",inst:"",cycle:"",email:"",meet:0,part:0,ref:0};
+      r.name=((a.first||a.name||"")+" "+(a.last||"")).trim(); r.inst=a.institution||a.city||""; r.cycle=a.cycle||""; r.email=a.email||"";
+      r.meet++; r.part+=Number(sm[a.sessionId]?.hours)||Number(a.hours)||2; r.ref+=Number(a.refHours)||0;
+    });
+    reportRows=Object.values(by).sort((a,b)=>a.name.localeCompare(b.name,"sq")).map(r=>({...r,credits:Math.min(r.part,8)/2*0.5+r.ref/2*0.5}));
+    $("#rBody").innerHTML=reportRows.length?reportRows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.name)}</td><td>${esc(r.inst)}</td><td>${esc(r.cycle)}</td><td>${esc(r.email)}</td><td>${r.meet}</td><td>${cr(r.part)}</td><td>${cr(r.ref)}</td><td><b>${cr(r.credits)}</b></td></tr>`).join(""):`<tr><td colspan="9" class="muted">Nuk ka prezenca në këtë vit shkollor.</td></tr>`;
+    $("#rNote").textContent="Kreditet llogariten sipas Udhëzimit nr. 16, datë 22.7.2024: pjesëmarrja jep 0,5 kredite për çdo 2 orë (maksimumi 8 orë = 2 kredite), ndërsa referimi 0,5 kredite për çdo 2 orë. Orët e referimit shënohen te lista e prezencës, kolona \"Referim\". Kreditet e drejtuesit nuk llogariten këtu.";
+    ["#rXlsx","#rWipe"].forEach(x=>$(x).classList.toggle("hidden",!reportRows.length));
+  }catch(err){ console.error(err); $("#rBody").innerHTML=`<tr><td colspan="9"><div class="msg err">Gabim: ${esc(err.code||err.message)}</div></td></tr>`; }
+  btn.disabled=false;
+};
+$("#rXlsx").onclick = () => {
+  const y=$("#rYear").value;
+  const rows=[["Nr","Emri dhe mbiemri","Institucioni arsimor","Cikli","E-mail","Takime","Orë pjesëmarrje","Orë referim","Kredite pjesëmarrje","Kredite referim","Kredite gjithsej"]]
+    .concat(reportRows.map((r,i)=>[i+1,r.name,r.inst,r.cycle,r.email,r.meet,r.part,r.ref,Math.min(r.part,8)/2*0.5,r.ref/2*0.5,r.credits]));
+  downloadTable(rows,`kreditet-${y}-${+y+1}`,"Kreditet");
+};
+$("#rWipe").onclick = async () => {
+  if(!reportIds.length) return;
+  if(!confirm(`Do të fshihen përgjithmonë ${reportIds.length} prezenca (emra, kontakte, firma) të vitit shkollor ${$("#rYear").selectedOptions[0].text}. Ke shkarkuar raportin dhe i ke dërguar kreditet në ASCAP? Vazhdo?`)) return;
+  try{ await deleteAttDocs(reportIds); reportRows=[]; reportIds=[]; $("#rBody").innerHTML=""; ["#rXlsx","#rWipe"].forEach(x=>$(x).classList.add("hidden")); await loadAttendance(); alert("Prezencat e vitit u fshinë."); }
+  catch(err){ console.error(err); alert("Gabim gjatë fshirjes."); }
+};
 
 /* ---------- Start ---------- */
 loadOpenSessions();
