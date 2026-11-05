@@ -399,7 +399,7 @@
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,collection,addDoc,getDocs,query,where,deleteDoc,updateDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,collection,addDoc,getDocs,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 /* ============ KONFIGURIMI ============ */
@@ -476,6 +476,8 @@ async function loadOpenSessions(){
   $("#noSession").classList.toggle("hidden",has);
   $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}</option>`).join("");
 }
+/* ID unike: trajnimi + emri e mbiemri të normalizuar (pa shkronja të mëdha, pa ë/ç, pa hapësira të tepërta) */
+function normName(t){ return t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim().replace(/ /g,"-"); }
 $("#attForm").addEventListener("submit", async e => {
   e.preventDefault();
   const msg=$("#fMsg"), btn=$("#fSubmit");
@@ -483,11 +485,12 @@ $("#attForm").addEventListener("submit", async e => {
   const s = openSessions.find(x=>x.id===$("#fSession").value);
   if(!s) return flash(msg,"Zgjidhni trajnimin.","err");
   const first=$("#fFirst").value.trim(), last=$("#fLast").value.trim();
-  const key = "att_"+s.id+"_"+(first+" "+last).toLowerCase();
+  const key = "att_"+s.id+"_"+normName(first+" "+last);
+  const attId = s.id+"_"+normName(first)+"_"+normName(last);
   if(localStorage.getItem(key)) return flash(msg,"Prezenca për këtë emër është dërguar tashmë në këtë pajisje.","err");
   btn.disabled=true;
   try{
-    await addDoc(collection(db,"attendance"),{
+    await setDoc(doc(db,"attendance",attId),{
       sessionId:s.id, sessionTitle:s.title, sessionDate:s.date,
       name:first+" "+last, first, last,
       institution:$("#fInst").value.trim(),
@@ -499,7 +502,11 @@ $("#attForm").addEventListener("submit", async e => {
     flash(msg,"✓ Faleminderit! Prezenca u regjistrua me sukses.","ok");
     showEval(s.id);
     msg.scrollIntoView({behavior:"smooth",block:"center"});
-  }catch(err){ console.error(err); flash(msg,"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
+  }catch(err){
+    console.error(err);
+    if(err && err.code==="permission-denied"){ localStorage.setItem(key,"1"); flash(msg,"Ky emër dhe mbiemër ka dërguar tashmë prezencën për këtë trajnim.","err"); }
+    else flash(msg,"Gabim gjatë dërgimit. Provoni përsëri.","err");
+  }
   btn.disabled=false;
 });
 
