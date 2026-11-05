@@ -31,6 +31,26 @@
   .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.25);padding:6px 12px;border-radius:99px;font-size:.78rem;font-weight:600;letter-spacing:.02em}
   .hero h1{margin:14px 0 6px;font-size:clamp(1.65rem,6vw,2.4rem);line-height:1.15;font-weight:800;letter-spacing:-.02em}
   .hero p{margin:0;opacity:.88;font-size:1rem;max-width:520px}
+  /* Hero kompakt në telefon */
+  @media(max-width:759px){
+    .hero{padding:12px 0 34px}
+    .hero::before,.hero::after{display:none}
+    .badge{padding:4px 10px;font-size:.7rem}
+    .hero h1{margin:8px 0 0;font-size:1.2rem;line-height:1.2}
+    .hero p{font-size:.84rem;line-height:1.4;margin-top:6px}
+    main{margin-top:-22px}
+  }
+  /* Menuja e poshtme më e dukshme në telefon */
+  @media(max-width:759px){
+    body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+    nav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));padding:6px;gap:4px;
+      border:1px solid rgba(59,91,219,.18);border-radius:24px;background:rgba(255,255,255,.97);
+      box-shadow:0 10px 30px rgba(30,58,138,.22),0 2px 6px rgba(30,58,138,.10)}
+    nav button{max-width:none;padding:9px 4px 8px;border-radius:18px;font-size:.78rem;font-weight:700;color:#5a6788;gap:4px}
+    nav button svg{width:26px;height:26px;stroke-width:2}
+    nav button.active{color:#fff;background:linear-gradient(135deg,#3b5bdb,#5b7cf0);box-shadow:0 6px 14px rgba(59,91,219,.38)}
+    nav button:active{transform:scale(.96)}
+  }
 
   /* ---------- Layout ---------- */
   main{margin-top:-44px;position:relative;z-index:2}
