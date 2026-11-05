@@ -94,6 +94,10 @@
   @media(max-width:560px){.row{grid-template-columns:1fr}}
   .check{display:flex;gap:12px;align-items:flex-start;background:var(--brand-l);padding:14px;border-radius:13px;margin-top:20px;font-size:.88rem;font-weight:500;color:#2a3558;cursor:pointer}
   .check input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:var(--brand);padding:0}
+  .check input[type=checkbox]{appearance:none;-webkit-appearance:none;display:grid;place-content:center;border:2px solid #9aa8d4;border-radius:7px;background:#fff;cursor:pointer}
+  .check input[type=checkbox]::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) scale(0);transition:transform .12s;margin-top:-2px}
+  .check input[type=checkbox]:checked{background:var(--brand);border-color:var(--brand)}
+  .check input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--brand),#5b7cf0);color:#fff;border:0;border-radius:14px;padding:15px 22px;font:700 1rem "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,219,.28);transition:.15s}
   .btn:active{transform:scale(.98)}
