@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1e3a8a">
 <title>Rrjeti Profesional TIK – Trajnimet Mujore</title>
+<link rel="manifest" href="/Rrjeti-profesional-TIK/manifest.json">
+<link rel="icon" href="/Rrjeti-profesional-TIK/pwa-assets/favicon-32.png" sizes="32x32">
+<link rel="icon" href="/Rrjeti-profesional-TIK/pwa-assets/favicon-16.png" sizes="16x16">
+<link rel="apple-touch-icon" href="/Rrjeti-profesional-TIK/pwa-assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rrjeti TIK">
+<meta name="mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rrjeti Profesional TIK – ZVAP Dibër">
+<meta property="og:description" content="Regjistro prezencën, gjej materialet dhe njoftimet e trajnimeve mujore të rrjetit TIK (AMU+AML).">
+<meta property="og:image" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/pwa-assets/og-image.png">
+<meta property="og:url" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rrjeti Profesional TIK – ZVAP Dibër">
+<meta name="twitter:description" content="Regjistro prezencën dhe gjej materialet e trajnimeve mujore.">
+<meta name="twitter:image" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/pwa-assets/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -98,6 +115,15 @@
   .check input[type=checkbox]::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) scale(0);transition:transform .12s;margin-top:-2px}
   .check input[type=checkbox]:checked{background:var(--brand);border-color:var(--brand)}
   .check input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
+
+  /* Bari i instalimit / njoftimeve */
+  .infobar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--brand-l);color:#1c2a5e;padding:10px 14px;font-size:.86rem;font-weight:600;
+    border-bottom:1px solid var(--line)}
+  .infobar.hidden{display:none}
+  .infobar-actions{display:flex;align-items:center;gap:8px;flex:none}
+  .btn.sm{padding:7px 14px;font-size:.82rem;border-radius:10px}
+  .infobar .x{border:0;background:transparent;color:#5a6788;font-size:1rem;cursor:pointer;padding:4px}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--brand),#5b7cf0);color:#fff;border:0;border-radius:14px;padding:15px 22px;font:700 1rem "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,219,.28);transition:.15s}
   .btn:active{transform:scale(.98)}
@@ -193,6 +219,21 @@
     <p>Regjistro prezencën me firmë dhe gjej materialet e çdo trajnimi, kudo dhe kurdo.</p>
   </div>
 </header>
+
+<div id="installBar" class="infobar hidden">
+  <span>📲 Instaloje këtë faqe si aplikacion në telefon</span>
+  <div class="infobar-actions">
+    <button id="installBtn" class="btn sm">Instalo</button>
+    <button id="installClose" class="x" aria-label="Mbyll">✕</button>
+  </div>
+</div>
+<div id="notifBar" class="infobar hidden">
+  <span>🔔 Merr njoftim kur shtohet material a trajnim i ri</span>
+  <div class="infobar-actions">
+    <button id="notifBtn" class="btn sm">Aktivizo</button>
+    <button id="notifClose" class="x" aria-label="Mbyll">✕</button>
+  </div>
+</div>
 
 <nav>
   <button class="active" data-tab="prezenca">
@@ -405,6 +446,7 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getFirestore,collection,addDoc,getDocs,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getMessaging,getToken,isSupported} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 /* ============ KONFIGURIMI ============ */
 const firebaseConfig = {
@@ -417,6 +459,7 @@ const firebaseConfig = {
   measurementId: "G-ZS0DNQ2RQM"
 };
 const ADMIN_EMAIL = "mendim.mera@gmail.com";
+const VAPID_KEY = "ZËVENDËSO_ME_VAPID_KEY"; // Firebase Console > Project settings > Cloud Messaging > Web Push certificates
 /* ===================================================== */
 
 const $ = s => document.querySelector(s);
@@ -428,8 +471,8 @@ const flash = (el,text,type="ok") => { el.innerHTML = `<div class="msg ${type}">
 
 const configured = !firebaseConfig.apiKey.includes("ZËVENDËSO");
 if(!configured) $("#cfgWarn").classList.remove("hidden");
-let db, auth;
-if(configured){ const app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); }
+let db, auth, fbApp;
+if(configured){ fbApp = initializeApp(firebaseConfig); db = getFirestore(fbApp); auth = getAuth(fbApp); }
 
 /* ---------- Tabs ---------- */
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
@@ -761,8 +804,53 @@ $("#rWipe").onclick = async () => {
   catch(err){ console.error(err); alert("Gabim gjatë fshirjes."); }
 };
 
+/* ---------- PWA: instalim + njoftime push ---------- */
+let swReg = null, deferredPrompt = null;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("/Rrjeti-profesional-TIK/sw.js").then(r => swReg = r).catch(err => console.error("SW:", err));
+}
+
+if(!isStandalone){
+  if(isIOS){
+    $("#installBar").classList.remove("hidden");
+    $("#installBtn").textContent = "Si instalohet?";
+    $("#installBtn").onclick = () => alert("Në Safari: prek ikonën Shpërnda (katrori me shigjetë) → \"Shto në Ekranin Kryesor\".");
+  } else {
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault(); deferredPrompt = e; $("#installBar").classList.remove("hidden");
+    });
+  }
+}
+$("#installBtn")?.addEventListener("click", async () => {
+  if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; $("#installBar").classList.add("hidden"); }
+});
+$("#installClose")?.addEventListener("click", () => $("#installBar").classList.add("hidden"));
+
+if(configured && !localStorage.getItem("notif_dismissed") && !(localStorage.getItem("notif_enabled")==="1")){
+  isSupported().then(ok => { if(ok && "Notification" in window && Notification.permission==="default") $("#notifBar").classList.remove("hidden"); });
+}
+$("#notifClose")?.addEventListener("click", () => { localStorage.setItem("notif_dismissed","1"); $("#notifBar").classList.add("hidden"); });
+$("#notifBtn")?.addEventListener("click", async () => {
+  try{
+    const perm = await Notification.requestPermission();
+    if(perm !== "granted"){ $("#notifBar").classList.add("hidden"); return; }
+    const reg = swReg || await navigator.serviceWorker.ready;
+    const messaging = getMessaging(fbApp);
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if(token){
+      await setDoc(doc(db,"deviceTokens",token), { createdAt: serverTimestamp(), ua: navigator.userAgent.slice(0,120) });
+      localStorage.setItem("notif_enabled","1");
+      $("#notifBar").classList.add("hidden");
+    }
+  }catch(err){ console.error("Njoftimet:", err); alert("Nuk u aktivizuan dot njoftimet në këtë shfletues/pajisje."); }
+});
+
 /* ---------- Start ---------- */
 loadOpenSessions();
+
 </script>
 </body>
 </html>

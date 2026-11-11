@@ -1,0 +1,17 @@
+{
+  "name": "Rrjeti Profesional TIK – ZVAP Dibër",
+  "short_name": "Rrjeti TIK",
+  "description": "Prezenca, materialet dhe trajnimet mujore të Rrjetit Profesional TIK (ZVAP Dibër).",
+  "start_url": "/Rrjeti-profesional-TIK/",
+  "scope": "/Rrjeti-profesional-TIK/",
+  "display": "standalone",
+  "background_color": "#f3f5fb",
+  "theme_color": "#1e3a8a",
+  "lang": "sq",
+  "icons": [
+    { "src": "/Rrjeti-profesional-TIK/pwa-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/Rrjeti-profesional-TIK/pwa-assets/icon-192-any.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/Rrjeti-profesional-TIK/pwa-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/Rrjeti-profesional-TIK/pwa-assets/icon-512-any.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
