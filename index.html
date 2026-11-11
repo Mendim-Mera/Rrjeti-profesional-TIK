@@ -446,7 +446,6 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getFirestore,collection,addDoc,getDocs,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getMessaging,getToken,isSupported} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 /* ============ KONFIGURIMI ============ */
 const firebaseConfig = {
@@ -459,7 +458,10 @@ const firebaseConfig = {
   measurementId: "G-ZS0DNQ2RQM"
 };
 const ADMIN_EMAIL = "mendim.mera@gmail.com";
-const VAPID_KEY = "BMBrerWtg-7TGdjFAhzny-3zr0TmfYhs2aHul-J8IpYuRknrUB5wPOvUUroAVjqyq28hKJMTo0_ZGOvhHFaWqvQ"; // Firebase Console > Project settings > Cloud Messaging > Web Push certificates
+/* Njoftimet push (OneSignal, falas, pa kartë) */
+const ONESIGNAL_APP_ID = "ddae06a8-d2ed-484d-9ba8-697f4f631dc4";
+const PUSH_WORKER_URL  = "https://rptik-push.mendim-mera.workers.dev/"; // p.sh. https://rptik-push.EMRI.workers.dev
+const PUSH_SHARED_SECRET = "fgyfkhhfbnnvnfnlflklfvblk";
 /* ===================================================== */
 
 const $ = s => document.querySelector(s);
@@ -644,8 +646,10 @@ async function loadSessionsAdmin(){
 $("#sesForm").addEventListener("submit", async e => {
   e.preventDefault();
   try{
-    await addDoc(collection(db,"sessions"),{date:$("#sDate").value,title:$("#sTitle").value.trim(),venue:$("#sVenue").value.trim(),hours:Number($("#sHours").value)||2,open:true,createdAt:serverTimestamp()});
+    const sTitleVal = $("#sTitle").value.trim(), sDateVal = $("#sDate").value;
+    await addDoc(collection(db,"sessions"),{date:sDateVal,title:sTitleVal,venue:$("#sVenue").value.trim(),hours:Number($("#sHours").value)||2,open:true,createdAt:serverTimestamp()});
     $("#sTitle").value=""; $("#sesMsg").innerHTML=""; await loadSessionsAdmin();
+    sendPush("📅 Trajnim i ri", sTitleVal + (sDateVal ? " – " + fmtDate(sDateVal) : ""));
   }catch(err){
     console.error(err);
     flash($("#sesMsg"),"Gabim: "+(err.code||"")+" – "+(err.message||err)+(String(err.code).includes("permission")?" → Kontrollo Rules në Firestore dhe ADMIN_EMAIL.":""),"err");
@@ -722,8 +726,10 @@ $("#matForm").addEventListener("submit", async e => {
   const url=$("#mUrl").value.trim();
   if(/^(javascript|data):/i.test(url)) return flash($("#mMsg"),"Lidhje e pavlefshme.","err");
   try{
-    await addDoc(collection(db,"materials"),{title:$("#mTitle").value.trim(),month:$("#mMonth").value,url,topic:$("#mTopic").value.trim(),desc:$("#mDesc").value.trim(),createdMs:Date.now()});
+    const mTitleVal = $("#mTitle").value.trim();
+    await addDoc(collection(db,"materials"),{title:mTitleVal,month:$("#mMonth").value,url,topic:$("#mTopic").value.trim(),desc:$("#mDesc").value.trim(),createdMs:Date.now()});
     $("#matForm").reset(); flash($("#mMsg"),"Materiali u shtua.","ok");
+    sendPush("📎 Material i ri", mTitleVal);
     await fetchMaterials(); renderAdminMaterials();
   }catch(err){ console.error(err); flash($("#mMsg"),"Gabim: "+(err.code||err.message),"err"); }
 });
@@ -804,7 +810,7 @@ $("#rWipe").onclick = async () => {
   catch(err){ console.error(err); alert("Gabim gjatë fshirjes."); }
 };
 
-/* ---------- PWA: instalim + njoftime push ---------- */
+/* ---------- PWA: instalim ---------- */
 let swReg = null, deferredPrompt = null;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -829,24 +835,48 @@ $("#installBtn")?.addEventListener("click", async () => {
 });
 $("#installClose")?.addEventListener("click", () => $("#installBar").classList.add("hidden"));
 
-if(configured && !localStorage.getItem("notif_dismissed") && !(localStorage.getItem("notif_enabled")==="1")){
-  isSupported().then(ok => { if(ok && "Notification" in window && Notification.permission==="default") $("#notifBar").classList.remove("hidden"); });
+/* ---------- Njoftime push (OneSignal) ---------- */
+const PUSH_READY = ONESIGNAL_APP_ID && !ONESIGNAL_APP_ID.startsWith("ZËVENDËSO");
+if(PUSH_READY){
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  const osScript = document.createElement("script");
+  osScript.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"; osScript.defer = true;
+  document.head.appendChild(osScript);
+  OneSignalDeferred.push(async (OneSignal) => {
+    await OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      serviceWorkerPath: "Rrjeti-profesional-TIK/sw.js",
+      serviceWorkerParam: { scope: "/Rrjeti-profesional-TIK/" },
+    });
+    const optedIn = await OneSignal.User.PushSubscription.optedIn;
+    if(optedIn){ localStorage.setItem("notif_enabled","1"); }
+    else if(!localStorage.getItem("notif_dismissed") && Notification.permission==="default"){
+      $("#notifBar").classList.remove("hidden");
+    }
+  });
 }
 $("#notifClose")?.addEventListener("click", () => { localStorage.setItem("notif_dismissed","1"); $("#notifBar").classList.add("hidden"); });
 $("#notifBtn")?.addEventListener("click", async () => {
+  if(!PUSH_READY){ alert("Njoftimet s'janë konfiguruar ende."); return; }
   try{
-    const perm = await Notification.requestPermission();
-    if(perm !== "granted"){ $("#notifBar").classList.add("hidden"); return; }
-    const reg = swReg || await navigator.serviceWorker.ready;
-    const messaging = getMessaging(fbApp);
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-    if(token){
-      await setDoc(doc(db,"deviceTokens",token), { createdAt: serverTimestamp(), ua: navigator.userAgent.slice(0,120) });
-      localStorage.setItem("notif_enabled","1");
-      $("#notifBar").classList.add("hidden");
-    }
+    await OneSignalDeferred.push(async (OneSignal) => { await OneSignal.Notifications.requestPermission(); });
+    $("#notifBar").classList.add("hidden");
+    localStorage.setItem("notif_enabled","1");
   }catch(err){ console.error("Njoftimet:", err); alert("Nuk u aktivizuan dot njoftimet në këtë shfletues/pajisje."); }
 });
+
+/* Thirret pas çdo trajnimi/materiali të ri, dërgon njoftimin përmes
+   mini-shërbimit falas në Cloudflare Workers (mban të fshehtë çelësin e OneSignal). */
+async function sendPush(title, body){
+  if(!PUSH_WORKER_URL || PUSH_WORKER_URL.startsWith("ZËVENDËSO")) return;
+  try{
+    await fetch(PUSH_WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Shared-Secret": PUSH_SHARED_SECRET },
+      body: JSON.stringify({ title, body }),
+    });
+  }catch(err){ console.error("Dërgimi i njoftimit dështoi:", err); }
+}
 
 /* ---------- Start ---------- */
 loadOpenSessions();
