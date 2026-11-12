@@ -313,7 +313,7 @@
 
     <div class="card hidden" id="evalCard">
       <h2>Vlerëso trajnimin</h2>
-      <p class="sub">Opsionale dhe anonime. Na ndihmon ta përmirësojmë rrjetin.</p>
+      <p class="sub" id="evalSub">Opsionale dhe anonime. Na ndihmon ta përmirësojmë rrjetin.</p>
       <form id="evalForm">
         <div id="eQs"></div>
         <label for="eImprove">Çfarë duhet përmirësuar në funksionimin e rrjetit?</label>
@@ -440,6 +440,9 @@
           <button class="btn block" type="submit">Shto materialin</button>
           <div id="mMsg"></div>
         </form>
+        <button class="btn sec block" type="button" id="matImport" style="margin-top:10px">📂 Importo skedarët nga dosja "materials"</button>
+        <p class="sub" style="margin:6px 0 0">Shton në listë skedarët që ke ngarkuar në dosjen <code>materials</code> të GitHub (muaji merret nga fusha "Muaji" më sipër, ose muaji aktual). Ata që janë shtuar tashmë anashkalohen.</p>
+        <div id="matImportMsg"></div>
         <h3>Materialet ekzistuese</h3>
         <div id="matAdminList"></div>
       </div>
@@ -518,7 +521,7 @@ function sigData(){
 }
 
 /* ---------- Teachers: sessions + attendance ---------- */
-let openSessions = [], rawOpen = [];
+let openSessions = [], rawOpen = [], evalSessions = [];
 /* Gjendja e një trajnimi të hapur sipas orës së pajisjes: "open" | "before" | "after" */
 function sessState(s, now = new Date()){
   if(!s.openFrom || !s.openTo) return "open";
@@ -555,9 +558,12 @@ async function loadOpenSessions(){
   if(!configured) return;
   try{
     const snap = await getDocs(collection(db,"sessions"));
-    rawOpen = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.open).sort((a,b)=>b.date.localeCompare(a.date));
-  }catch(err){ console.error(err); rawOpen=[]; }
+    const all = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
+    rawOpen = all.filter(s=>s.open);
+    evalSessions = all.filter(s=>s.evalOpen);
+  }catch(err){ console.error(err); rawOpen=[]; evalSessions=[]; }
   renderOpenSessions();
+  renderEval();
 }
 /* Rivlerëso hapjen/mbylljen çdo 20 sekonda, pa rifreskuar faqen */
 setInterval(() => { if(rawOpen.length) renderOpenSessions(); }, 20000);
@@ -672,8 +678,8 @@ async function loadSessionsAdmin(){
   const snap = await getDocs(collection(db,"sessions"));
   allSessions = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
   $("#sesList").innerHTML = allSessions.length ? allSessions.map(s=>`
-    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span></strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë${s.openFrom&&s.openTo?" · regjistrim "+esc(s.openFrom)+"–"+esc(s.openTo):""}</small></div>
-    <div class="acts"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
+    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span>${s.evalOpen?'<span class="pill">vlerësim aktiv</span>':""}</strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë${s.openFrom&&s.openTo?" · regjistrim "+esc(s.openFrom)+"–"+esc(s.openTo):""}</small></div>
+    <div class="acts"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn sec sm" data-toggleeval="${s.id}">${s.evalOpen?"Mbyll vlerësimin":"Hap vlerësimin"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
     : `<div class="empty"><span class="ico">🗓</span>Ende nuk keni krijuar trajnime.</div>`;
   const prev = $("#attSession").value;
   $("#attSession").innerHTML = allSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}</option>`).join("");
@@ -699,6 +705,7 @@ $("#sesForm").addEventListener("submit", async e => {
 $("#sesList").addEventListener("click", async e => {
   const t=e.target.closest("button"); if(!t) return;
   if(t.dataset.toggle){ const s=allSessions.find(x=>x.id===t.dataset.toggle); await updateDoc(doc(db,"sessions",s.id),{open:!s.open}); loadSessionsAdmin(); }
+  if(t.dataset.toggleeval){ const s=allSessions.find(x=>x.id===t.dataset.toggleeval); await updateDoc(doc(db,"sessions",s.id),{evalOpen:!s.evalOpen}); loadSessionsAdmin(); }
   if(t.dataset.delses && confirm("Të fshihet trajnimi? Prezencat e tij NUK fshihen automatikisht; përdor butonin \"Fshi prezencat e trajnimit\" te lista e prezencës.")){ await deleteDoc(doc(db,"sessions",t.dataset.delses)); loadSessionsAdmin(); }
 });
 
@@ -779,16 +786,44 @@ $("#matAdminList").addEventListener("click", async e => {
   if(confirm("Të fshihet materiali?")){ await deleteDoc(doc(db,"materials",t.dataset.delmat)); await fetchMaterials(); renderAdminMaterials(); }
 });
 
+$("#matImport").addEventListener("click", async () => {
+  const msg=$("#matImportMsg"), btn=$("#matImport"); btn.disabled=true;
+  try{
+    const r = await fetch("https://api.github.com/repos/mendim-mera/Rrjeti-profesional-TIK/contents/materials");
+    if(!r.ok) throw new Error("GitHub u përgjigj "+r.status);
+    const files = (await r.json()).filter(f=>f.type==="file" && !/^\./.test(f.name));
+    const norm = u => decodeURIComponent((u||"").replace(/^\.?\//,"")).toLowerCase();
+    const have = new Set(allMaterials.map(m=>norm(m.url)));
+    const d = new Date(), month = $("#mMonth").value || (d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));
+    let added = 0;
+    for(const f of files){
+      const rel = "materials/"+f.name;
+      if(have.has(norm(rel))) continue;
+      const title = f.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim();
+      await addDoc(collection(db,"materials"),{title,month,url:"materials/"+encodeURIComponent(f.name),topic:"",desc:"",createdMs:Date.now()+added});
+      added++;
+    }
+    await fetchMaterials(); renderAdminMaterials(); renderMaterials();
+    flash(msg, added ? "U shtuan "+added+" materiale nga dosja ("+files.length+" skedarë gjithsej)." : "Asnjë skedar i ri në dosje ("+files.length+" skedarë, të gjithë janë shtuar tashmë).","ok");
+  }catch(err){ console.error(err); flash(msg,"Gabim gjatë importimit: "+(err.message||err),"err"); }
+  btn.disabled=false;
+});
+
 /* ---------- Vlerësimi nga mësuesit ---------- */
 const EVAL_Q=[["q1","Sa i dobishëm ka qenë rrjeti për zhvillimin tuaj profesional?"],["q2","Sa të përshtatshme kanë qenë temat e trajtuara?"],["q3","Sa aktivisht jeni përfshirë në veprimtaritë e rrjetit?"]];
 const EVAL_OPT=["Shumë","Mesatarisht","Pak"];
 $("#eQs").innerHTML=EVAL_Q.map(([k,t])=>`<label>${t} <b>*</b></label><div class="chips">${EVAL_OPT.map((o,i)=>`<label class="chip"><input type="radio" name="${k}" value="${o}" ${i===0?"required":""}><span>${o}</span></label>`).join("")}</div>`).join("");
 let evalSession="";
-function showEval(id){
-  if(localStorage.getItem("eval_"+id)) return;
-  evalSession=id; $("#evalForm").classList.remove("hidden"); $("#evalThanks").classList.add("hidden"); $("#eMsg").innerHTML="";
+/* Vlerësimi shfaqet vetëm për trajnimet ku drejtuesi e ka aktivizuar (butoni "Hap vlerësimin") */
+function renderEval(){
+  const s = evalSessions.find(x => { try{ return !localStorage.getItem("eval_"+x.id); }catch{ return true; } });
+  if(!s){ if($("#evalThanks").classList.contains("hidden")) $("#evalCard").classList.add("hidden"); return; }
+  evalSession = s.id;
+  $("#evalSub").textContent = "Trajnimi: " + s.title + " (" + fmtDate(s.date) + "). Opsionale dhe anonime.";
+  $("#evalForm").classList.remove("hidden"); $("#evalThanks").classList.add("hidden");
   $("#evalCard").classList.remove("hidden");
 }
+function showEval(){ renderEval(); }
 $("#evalForm").addEventListener("submit", async e => {
   e.preventDefault(); const f=new FormData(e.target);
   try{
