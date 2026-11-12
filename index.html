@@ -91,7 +91,7 @@
   nav button.active{color:var(--brand);background:var(--brand-l)}
   @media(min-width:760px){
     body{padding-bottom:40px}
-    nav{position:sticky;top:12px;bottom:auto;left:auto;right:auto;max-width:460px;margin:-84px auto 24px;border:1px solid var(--line);border-radius:99px;padding:6px;box-shadow:var(--shadow);z-index:30}
+    nav{position:sticky;top:12px;bottom:auto;left:auto;right:auto;max-width:560px;margin:-84px auto 24px;border:1px solid var(--line);border-radius:99px;padding:6px;box-shadow:var(--shadow);z-index:30}
     nav button{flex-direction:row;justify-content:center;gap:8px;font-size:.88rem;border-radius:99px;padding:10px 14px}
     nav button svg{width:18px;height:18px}
     nav button.active{background:var(--brand);color:#fff}
@@ -172,6 +172,22 @@
   .mat .acts{display:flex;gap:8px;align-items:center;flex:none}
   @media(max-width:480px){.mat .go span{display:none}}
 
+
+  /* ---------- Pyetësori i nevojave ---------- */
+  .qsec{margin-top:26px;padding-top:6px;border-top:1px solid var(--line)}
+  .qsec h3{margin:14px 0 4px;font-size:1.02rem}
+  .qsec .hint{margin:0 0 6px;color:var(--muted);font-size:.86rem}
+  .qrow{background:#fbfcff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px}
+  .qrow>span{display:block;font-size:.92rem;font-weight:600;margin-bottom:8px}
+  .scale{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .scale .chip span{display:block;text-align:center;padding:9px 0;font-weight:700}
+  .scalekey{font-size:.8rem;color:var(--muted);margin:2px 0 0;line-height:1.5}
+  .qother{margin-top:10px}
+  .counter{font-size:.82rem;color:var(--muted);margin-top:8px}
+  .counter b{color:var(--brand)}
+  .svhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .bar.warn i{background:linear-gradient(90deg,#e8590c,#f59f00)}
+
   /* ---------- Admin ---------- */
   .pill{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--ok-bg);color:var(--ok);margin-left:8px;vertical-align:middle}
   .pill.closed{background:#eceff6;color:#6b7694}
@@ -244,6 +260,8 @@
     <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Prezenca</button>
   <button data-tab="materialet">
     <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Materialet</button>
+  <button data-tab="pyetesori">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Pyetësori</button>
   <button data-tab="admin">
     <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Drejtuesi</button>
 </nav>
@@ -345,6 +363,67 @@
     </div>
   </section>
 
+  <!-- PYETËSORI -->
+  <section id="view-pyetesori" class="hidden">
+    <div class="card">
+      <div class="svhead">
+        <div>
+          <h2 style="margin:0">Pyetësor për identifikimin e nevojave <span class="pill closed" id="svPill">po ngarkohet…</span></h2>
+          <p class="sub" style="margin:6px 0 0">Rrjeti profesional TIK (AMU + AML) · ZVAP Dibër · Viti shkollor 2026–2027</p>
+        </div>
+      </div>
+      <div id="svClosed" class="empty hidden"><span class="ico">🔒</span>Pyetësori nuk është i hapur për plotësim për momentin.<br>Drejtuesi i rrjetit do ta hapë para takimit të parë.</div>
+      <div id="svDone" class="empty hidden"><span class="ico">🙏</span>Faleminderit! Përgjigjet tuaja u regjistruan.<br><button class="btn sec sm" type="button" id="svAgain" style="margin-top:12px">Plotëso përsëri (p.sh. për një koleg)</button></div>
+      <form id="svForm" class="hidden" autocomplete="off">
+        <p class="sub" style="margin-top:14px">Ky pyetësor synon të identifikojë nevojat tuaja reale për zhvillim profesional, që temat e rrjetit të jenë konkrete dhe të dobishme. Plotësimi zgjat rreth 5–7 minuta. Përgjigjet përdoren vetëm për planifikimin e veprimtarive të rrjetit dhe nuk vlerësojnë asnjë koleg. Emri është opsional.</p>
+
+        <div class="qsec"><h3>A. Të dhëna të përgjithshme</h3>
+          <label>Niveli ku jepni mësim <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="level" value="AMU (klasat 6–9)" required><span>AMU (klasat 6–9)</span></label><label class="chip"><input type="radio" name="level" value="AML (klasat 10–12)"><span>AML (klasat 10–12)</span></label><label class="chip"><input type="radio" name="level" value="Të dyja"><span>Të dyja</span></label></div>
+          <label>Vitet e punës në arsim <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="years" value="0–5" required><span>0–5</span></label><label class="chip"><input type="radio" name="years" value="6–15"><span>6–15</span></label><label class="chip"><input type="radio" name="years" value="Mbi 15"><span>Mbi 15</span></label></div>
+          <label>Kategoria e kualifikimit <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="category" value="Mësues" required><span>Mësues</span></label><label class="chip"><input type="radio" name="category" value="Mësues i kualifikuar"><span>Mësues i kualifikuar</span></label><label class="chip"><input type="radio" name="category" value="Mësues specialist"><span>Mësues specialist</span></label><label class="chip"><input type="radio" name="category" value="Mësues master/ekspert"><span>Mësues master/ekspert</span></label></div>
+          <label>Lloji i shkollës <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="school" value="Në qytet" required><span>Në qytet</span></label><label class="chip"><input type="radio" name="school" value="Në zonë rurale/malore"><span>Në zonë rurale/malore</span></label></div>
+          <label>Kushtet teknike në shkollë (laborator, internet, pajisje) <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="tech" value="Të mira" required><span>Të mira</span></label><label class="chip"><input type="radio" name="tech" value="Mesatare"><span>Mesatare</span></label><label class="chip"><input type="radio" name="tech" value="Të pamjaftueshme"><span>Të pamjaftueshme</span></label></div>
+          <label for="svName">Emri dhe mbiemri (opsional)</label><input id="svName" name="name" maxlength="80" placeholder="Mund ta lini bosh">
+        </div>
+
+        <div class="qsec"><h3>B. Vetëvlerësimi i kompetencave</h3>
+          <p class="hint">Vlerësoni veten nga 1 deri në 4.</p>
+          <p class="scalekey"><b>1</b> = kam shumë nevojë për zhvillim · <b>2</b> = kam nevojë · <b>3</b> = jam mjaft i/e aftë · <b>4</b> = mund të ndaj përvojën me të tjerët</p>
+          <div class="qrow"><span>Planifikimi mësimor sipas kurrikulës së TIK-ut</span><div class="scale"><label class="chip"><input type="radio" name="c_planifikimi" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_planifikimi" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_planifikimi" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_planifikimi" value="4"><span>4</span></label></div></div><div class="qrow"><span>Metoda aktive (mësimi me projekte, mësimi me problem, puna në grup)</span><div class="scale"><label class="chip"><input type="radio" name="c_metodat" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_metodat" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_metodat" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_metodat" value="4"><span>4</span></label></div></div><div class="qrow"><span>Vlerësimi formues dhe përdorimi i rubrikave</span><div class="scale"><label class="chip"><input type="radio" name="c_vleresimi" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_vleresimi" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_vleresimi" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_vleresimi" value="4"><span>4</span></label></div></div><div class="qrow"><span>Programimi dhe të menduarit llogaritës (Scratch, Python, micro:bit)</span><div class="scale"><label class="chip"><input type="radio" name="c_programimi" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_programimi" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_programimi" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_programimi" value="4"><span>4</span></label></div></div><div class="qrow"><span>Mjete digjitale për mësimdhënie (Google Workspace/Classroom, Canva, Kahoot etj.)</span><div class="scale"><label class="chip"><input type="radio" name="c_mjetet" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_mjetet" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_mjetet" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_mjetet" value="4"><span>4</span></label></div></div><div class="qrow"><span>Siguria kibernetike dhe qytetaria digjitale</span><div class="scale"><label class="chip"><input type="radio" name="c_siguria" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_siguria" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_siguria" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_siguria" value="4"><span>4</span></label></div></div><div class="qrow"><span>Përdorimi i inteligjencës artificiale në mësimdhënie</span><div class="scale"><label class="chip"><input type="radio" name="c_ia" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_ia" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_ia" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_ia" value="4"><span>4</span></label></div></div><div class="qrow"><span>Puna me nxënës me nevoja të veçanta dhe diferencimi i mësimdhënies</span><div class="scale"><label class="chip"><input type="radio" name="c_diferencimi" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_diferencimi" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_diferencimi" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_diferencimi" value="4"><span>4</span></label></div></div><div class="qrow"><span>Projekte kurrikulare ndërlëndore</span><div class="scale"><label class="chip"><input type="radio" name="c_projektet" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_projektet" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_projektet" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_projektet" value="4"><span>4</span></label></div></div><div class="qrow"><span>Menaxhimi i klasës dhe motivimi i nxënësve</span><div class="scale"><label class="chip"><input type="radio" name="c_klasa" value="1" required><span>1</span></label><label class="chip"><input type="radio" name="c_klasa" value="2"><span>2</span></label><label class="chip"><input type="radio" name="c_klasa" value="3"><span>3</span></label><label class="chip"><input type="radio" name="c_klasa" value="4"><span>4</span></label></div></div>
+        </div>
+
+        <div class="qsec"><h3>C. Temat prioritare</h3>
+          <p class="hint">Zgjidhni deri në 5 tema që do t'i ndiqnit me interes në rrjet.</p>
+          <div class="chips" id="svTopics"><label class="chip"><input type="checkbox" name="topic" value="Metodologji aktive në TIK"><span>Metodologji aktive në TIK</span></label><label class="chip"><input type="checkbox" name="topic" value="Vlerësimi formues dhe rubrikat"><span>Vlerësimi formues dhe rubrikat</span></label><label class="chip"><input type="checkbox" name="topic" value="Siguria kibernetike dhe etika digjitale"><span>Siguria kibernetike dhe etika digjitale</span></label><label class="chip"><input type="checkbox" name="topic" value="Mbrojtja e të dhënave personale të nxënësve"><span>Mbrojtja e të dhënave personale të nxënësve</span></label><label class="chip"><input type="checkbox" name="topic" value="Inteligjenca artificiale në mësimdhënie"><span>Inteligjenca artificiale në mësimdhënie</span></label><label class="chip"><input type="checkbox" name="topic" value="Programimi (Scratch, Python, micro:bit)"><span>Programimi (Scratch, Python, micro:bit)</span></label><label class="chip"><input type="checkbox" name="topic" value="Zhvillimi i uebit dhe dizajni digjital"><span>Zhvillimi i uebit dhe dizajni digjital</span></label><label class="chip"><input type="checkbox" name="topic" value="Projekte kurrikulare ndërlëndore"><span>Projekte kurrikulare ndërlëndore</span></label><label class="chip"><input type="checkbox" name="topic" value="Orët e hapura dhe përgatitja për kualifikim"><span>Orët e hapura dhe përgatitja për kualifikim</span></label><label class="chip"><input type="checkbox" name="topic" value="Puna me nxënës me vështirësi mësimore"><span>Puna me nxënës me vështirësi mësimore</span></label><label class="chip"><input type="checkbox" name="topic" value="Përdorimi i laboratorit TIK me burime të kufizuara"><span>Përdorimi i laboratorit TIK me burime të kufizuara</span></label><label class="chip"><input type="checkbox" name="topic" value="Tjetër" id="svTopicOtherCb"><span>Tjetër</span></label></div>
+          <div class="qother hidden" id="svTopicOtherWrap"><input name="topicOther" id="svTopicOther" maxlength="120" placeholder="Cila temë?"></div>
+          <div class="counter">Të zgjedhura: <b id="svTopicCount">0</b> / 5</div>
+        </div>
+
+        <div class="qsec"><h3>D. Organizimi i takimeve</h3>
+          <label>Forma e preferuar e takimeve <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="format" value="Fizike" required><span>Fizike</span></label><label class="chip"><input type="radio" name="format" value="Online"><span>Online</span></label><label class="chip"><input type="radio" name="format" value="Të përziera"><span>Të përziera</span></label></div>
+          <label>Koha më e përshtatshme <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="time" value="Pas orarit mësimor" required><span>Pas orarit mësimor</span></label><label class="chip"><input type="radio" name="time" value="Të shtunën"><span>Të shtunën</span></label><label class="chip"><input type="radio" name="time" value="Tjetër"><span>Tjetër</span></label></div>
+          <div class="qother hidden" id="svTimeOtherWrap"><input name="timeOther" id="svTimeOther" maxlength="80" placeholder="Shkruani kohën e përshtatshme"></div>
+          <label>Sa i/e gatshëm/e jeni të prezantoni një praktikë ose material gjatë vitit? <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="present" value="Po, me kënaqësi" required><span>Po, me kënaqësi</span></label><label class="chip"><input type="radio" name="present" value="Po, me mbështetje"><span>Po, me mbështetje</span></label><label class="chip"><input type="radio" name="present" value="Jo këtë vit"><span>Jo këtë vit</span></label></div>
+          <label for="svPresentTopic">Cilën temë do të dëshironit ta prezantonit?</label><input id="svPresentTopic" name="presentTopic" maxlength="150">
+          <label>Cila platformë komunikimi ju përshtatet? <b>*</b></label><div class="chips"><label class="chip"><input type="radio" name="platform" value="Viber/WhatsApp" required><span>Viber/WhatsApp</span></label><label class="chip"><input type="radio" name="platform" value="Email"><span>Email</span></label><label class="chip"><input type="radio" name="platform" value="Google Classroom/Drive"><span>Google Classroom/Drive</span></label><label class="chip"><input type="radio" name="platform" value="Tjetër"><span>Tjetër</span></label></div>
+          <div class="qother hidden" id="svPlatOtherWrap"><input name="platformOther" id="svPlatOther" maxlength="80" placeholder="Cila platformë?"></div>
+        </div>
+
+        <div class="qsec"><h3>E. Sfidat dhe pyetje të hapura</h3>
+          <label for="svChallenge">Cila është sfida kryesore që hasni sot në mësimdhënien e TIK-ut?</label><textarea id="svChallenge" name="challenge" rows="3" maxlength="1000"></textarea>
+          <label for="svGood">Cila praktikë ose aktivitet ka funksionuar mirë te nxënësit tuaj dhe do të donit ta ndanit me kolegët?</label><textarea id="svGood" name="goodPractice" rows="3" maxlength="1000"></textarea>
+          <label for="svSupport">Çfarë mbështetje prisni nga rrjeti dhe nga drejtuesi i tij?</label><textarea id="svSupport" name="support" rows="3" maxlength="1000"></textarea>
+          <label for="svSugg">Sugjerime të tjera për veprimtaritë e rrjetit</label><textarea id="svSugg" name="suggestions" rows="3" maxlength="1000"></textarea>
+        </div>
+
+        <label class="check"><input type="checkbox" id="svConsent" required><span>Jam dakord që përgjigjet e mia të ruhen për planifikimin e veprimtarive të rrjetit, sipas Ligjit nr. 124/2024 për mbrojtjen e të dhënave personale.</span></label>
+        <button class="btn block" id="svSubmit" type="submit">Dërgo përgjigjet</button>
+        <div id="svMsg"></div>
+        <p class="note" style="text-align:center">Falënderojmë për kontributin tuaj!</p>
+      </form>
+    </div>
+  </section>
+
   <!-- ADMIN -->
   <section id="view-admin" class="hidden">
     <div id="loginCard" class="card">
@@ -409,6 +488,19 @@
         <div id="evalBox"></div>
       </div>
 
+      <div class="card noprint" id="needsCard">
+        <h2>Pyetësori i nevojave <span class="pill closed" id="nPill">i mbyllur</span></h2>
+        <p class="sub" id="nCount">Ende nuk ka përgjigje.</p>
+        <div class="actions">
+          <button class="btn sm" id="nToggle">Hap pyetësorin</button>
+          <button class="btn sec sm hidden" id="nXlsx">⬇ Shkarko Excel</button>
+          <button class="btn danger sm hidden" id="nWipe">🗑 Fshi përgjigjet</button>
+        </div>
+        <div id="nMsg"></div>
+        <div id="nBox"></div>
+        <p class="note">Rezultatet grupohen sipas nivelit (AMU / AML). Fushat me mesatare nën 2,5 shënohen me portokalli. Të dhënat personale (emri, shkolla) përdoren vetëm për planifikimin e rrjetit, sipas Ligjit nr. 124/2024; shkarko Excel-in dhe fshij përgjigjet kur nuk të nevojiten më.</p>
+      </div>
+
       <div class="card noprint">
         <h2>Kreditet vjetore</h2>
         <p class="sub">Raporti për ASCAP në fund të vitit shkollor.</p>
@@ -456,7 +548,7 @@
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,collection,addDoc,getDocs,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,collection,addDoc,getDocs,getDoc,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 /* ============ KONFIGURIMI ============ */
@@ -491,9 +583,10 @@ if(configured){ fbApp = initializeApp(firebaseConfig); db = getFirestore(fbApp);
 /* ---------- Tabs ---------- */
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x===b));
-  ["prezenca","materialet","admin"].forEach(t => $("#view-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+  ["prezenca","materialet","pyetesori","admin"].forEach(t => $("#view-"+t).classList.toggle("hidden", t!==b.dataset.tab));
   window.scrollTo({top:0,behavior:"smooth"});
   if(b.dataset.tab==="materialet") loadMaterials();
+  if(b.dataset.tab==="pyetesori") loadSurveyState();
 });
 
 /* ---------- Signature pad ---------- */
@@ -687,7 +780,7 @@ $("#logoutBtn").onclick = () => signOut(auth);
 
 let allSessions=[], currentAtt=[];
 async function loadAdmin(){
-  await Promise.all([loadSessionsAdmin(), fetchMaterials().then(renderAdminMaterials)]);
+  await Promise.all([loadSessionsAdmin(), fetchMaterials().then(renderAdminMaterials), loadNeedsAdmin()]);
   if(!$("#sDate").value) $("#sDate").value = new Date().toISOString().slice(0,10);
 }
 async function loadSessionsAdmin(){
@@ -861,6 +954,132 @@ async function loadEvals(){
     $("#evalBox").innerHTML = ev.length ? bars+txt("improve","Çfarë duhet përmirësuar")+txt("topics","Sugjerime për tematika") : "";
   }catch(err){ console.error(err); $("#evalBox").innerHTML=`<div class="msg err">Nuk u ngarkuan vlerësimet (kontrollo Rules te Firestore, shih README).</div>`; }
 }
+
+/* ---------- Pyetësori i nevojave ---------- */
+const SV_COMP = [["planifikimi", "Planifikimi mësimor sipas kurrikulës së TIK-ut"], ["metodat", "Metoda aktive (mësimi me projekte, mësimi me problem, puna në grup)"], ["vleresimi", "Vlerësimi formues dhe përdorimi i rubrikave"], ["programimi", "Programimi dhe të menduarit llogaritës (Scratch, Python, micro:bit)"], ["mjetet", "Mjete digjitale për mësimdhënie (Google Workspace/Classroom, Canva, Kahoot etj.)"], ["siguria", "Siguria kibernetike dhe qytetaria digjitale"], ["ia", "Përdorimi i inteligjencës artificiale në mësimdhënie"], ["diferencimi", "Puna me nxënës me nevoja të veçanta dhe diferencimi i mësimdhënies"], ["projektet", "Projekte kurrikulare ndërlëndore"], ["klasa", "Menaxhimi i klasës dhe motivimi i nxënësve"]];
+const SV_TOPICS = ["Metodologji aktive në TIK", "Vlerësimi formues dhe rubrikat", "Siguria kibernetike dhe etika digjitale", "Mbrojtja e të dhënave personale të nxënësve", "Inteligjenca artificiale në mësimdhënie", "Programimi (Scratch, Python, micro:bit)", "Zhvillimi i uebit dhe dizajni digjital", "Projekte kurrikulare ndërlëndore", "Orët e hapura dhe përgatitja për kualifikim", "Puna me nxënës me vështirësi mësimore", "Përdorimi i laboratorit TIK me burime të kufizuara"];
+const SV_MAX_TOPICS = 5;
+let svOpen = false;
+function svRender(){
+  const done = (()=>{ try{ return !!localStorage.getItem("needs_done"); }catch{ return false; } })();
+  $("#svPill").textContent = svOpen ? "i hapur" : "i mbyllur";
+  $("#svPill").classList.toggle("closed", !svOpen);
+  $("#svClosed").classList.toggle("hidden", svOpen);
+  $("#svDone").classList.toggle("hidden", !(svOpen && done && !svForceForm));
+  $("#svForm").classList.toggle("hidden", !(svOpen && (!done || svForceForm)));
+}
+let svForceForm = false;
+async function loadSurveyState(){
+  if(!configured) return;
+  try{
+    const d = await getDoc(doc(db,"settings","needsSurvey"));
+    svOpen = d.exists() && d.data().open === true;
+  }catch(err){ console.error(err); svOpen = false; }
+  svRender();
+}
+$("#svAgain").onclick = () => { svForceForm = true; svRender(); };
+function svToggleOther(cbSel, wrapSel){ const w=$(wrapSel); w.classList.toggle("hidden", !$(cbSel).checked); }
+$("#svForm").addEventListener("change", e => {
+  const t = e.target;
+  if(t.name==="topic"){
+    const all=[...document.querySelectorAll('#svForm input[name=topic]')], n=all.filter(x=>x.checked).length;
+    if(n>SV_MAX_TOPICS){ t.checked=false; flash($("#svMsg"),"Mund të zgjidhni maksimumi 5 tema.","info"); }
+    else $("#svMsg").innerHTML="";
+    $("#svTopicCount").textContent = all.filter(x=>x.checked).length;
+    $("#svTopicOtherWrap").classList.toggle("hidden", !$("#svTopicOtherCb").checked);
+  }
+  if(t.name==="time") $("#svTimeOtherWrap").classList.toggle("hidden", t.value!=="Tjetër");
+  if(t.name==="platform") $("#svPlatOtherWrap").classList.toggle("hidden", t.value!=="Tjetër");
+});
+$("#svForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if(!svOpen){ flash($("#svMsg"),"Pyetësori u mbyll.","err"); return; }
+  const f = new FormData(e.target), g = k => (f.get(k)||"").toString().trim();
+  const ratings = {}; SV_COMP.forEach(([k]) => ratings[k] = Number(f.get("c_"+k)));
+  const btn = $("#svSubmit"); btn.disabled = true;
+  try{
+    await addDoc(collection(db,"needs"),{
+      level:g("level"),years:g("years"),category:g("category"),school:g("school"),tech:g("tech"),name:g("name"),
+      ratings,topics:f.getAll("topic"),topicOther:g("topicOther"),
+      format:g("format"),time:g("time"),timeOther:g("timeOther"),present:g("present"),presentTopic:g("presentTopic"),
+      platform:g("platform"),platformOther:g("platformOther"),
+      challenge:g("challenge"),goodPractice:g("goodPractice"),support:g("support"),suggestions:g("suggestions"),
+      createdAt:serverTimestamp(),createdMs:Date.now()
+    });
+    try{ localStorage.setItem("needs_done","1"); }catch{}
+    e.target.reset();
+    ["#svTopicOtherWrap","#svTimeOtherWrap","#svPlatOtherWrap"].forEach(x=>$(x).classList.add("hidden"));
+    $("#svTopicCount").textContent = "0"; $("#svMsg").innerHTML = "";
+    svForceForm = false; svRender(); window.scrollTo({top:0,behavior:"smooth"});
+  }catch(err){ console.error(err); flash($("#svMsg"),"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
+  btn.disabled = false;
+});
+
+/* --- Paneli i drejtuesit --- */
+let needsRows = [];
+function nRenderToggle(){
+  $("#nPill").textContent = svOpen ? "i hapur" : "i mbyllur";
+  $("#nPill").classList.toggle("closed", !svOpen);
+  $("#nToggle").textContent = svOpen ? "Mbyll pyetësorin" : "Hap pyetësorin";
+  $("#nToggle").classList.toggle("sec", svOpen);
+}
+$("#nToggle").onclick = async () => {
+  const btn=$("#nToggle"); btn.disabled=true;
+  try{
+    await setDoc(doc(db,"settings","needsSurvey"),{open:!svOpen,updatedMs:Date.now()});
+    svOpen = !svOpen; nRenderToggle(); svRender();
+    flash($("#nMsg"), svOpen ? "Pyetësori u hap: mësuesit mund ta plotësojnë te skeda «Pyetësori»." : "Pyetësori u mbyll.", "ok");
+  }catch(err){ console.error(err); flash($("#nMsg"),"Gabim: "+(err.code||err.message)+" (kontrollo Rules te Firestore, shih README).","err"); }
+  btn.disabled=false;
+};
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+const fmt1 = n => (Math.round(n*100)/100).toFixed(2).replace(".",",");
+function nGroup(r){ return /^AMU/.test(r.level)?"AMU":/^AML/.test(r.level)?"AML":"Të dyja"; }
+async function loadNeedsAdmin(){
+  try{
+    const d = await getDoc(doc(db,"settings","needsSurvey")); svOpen = d.exists() && d.data().open === true;
+  }catch{ svOpen=false; }
+  nRenderToggle();
+  try{
+    const snap = await getDocs(collection(db,"needs"));
+    needsRows = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdMs||0)-(b.createdMs||0));
+  }catch(err){ console.error(err); $("#nBox").innerHTML=`<div class="msg err">Nuk u ngarkuan përgjigjet (kontrollo Rules te Firestore, shih README).</div>`; return; }
+  const n = needsRows.length;
+  ["#nXlsx","#nWipe"].forEach(x=>$(x).classList.toggle("hidden",!n));
+  const by = {AMU:0,AML:0,"Të dyja":0}; needsRows.forEach(r=>by[nGroup(r)]++);
+  $("#nCount").textContent = n ? `${n} përgjigje gjithsej · AMU: ${by.AMU} · AML: ${by.AML} · Të dyja: ${by["Të dyja"]}` : "Ende nuk ka përgjigje.";
+  if(!n){ $("#nBox").innerHTML=""; return; }
+
+  const groups = [["Të gjithë",needsRows],["AMU",needsRows.filter(r=>nGroup(r)==="AMU")],["AML",needsRows.filter(r=>nGroup(r)==="AML")]];
+  const compRows = SV_COMP.map(([k,t])=>{
+    const cells = groups.map(([,rs])=>{ const v=rs.map(r=>r.ratings?.[k]).filter(Boolean); return v.length?avg(v):null; });
+    return `<tr><td>${esc(t)}</td>`+cells.map(c=>`<td style="${c!==null&&c<2.5?"background:#fff1e2;font-weight:700;color:#b34700":""}">${c===null?"–":fmt1(c)}</td>`).join("")+`</tr>`;
+  }).join("");
+  const compTable = `<h3>Vetëvlerësimi mesatar (1–4)</h3><div class="tablewrap"><table style="min-width:520px"><thead><tr><th>Fusha</th>${groups.map(([g])=>`<th>${g}</th>`).join("")}</tr></thead><tbody>${compRows}</tbody></table></div>`;
+
+  const tc = {}; needsRows.forEach(r=>(r.topics||[]).forEach(t=>tc[t]=(tc[t]||0)+1));
+  const tList = Object.entries(tc).sort((a,b)=>b[1]-a[1]);
+  const bars = (list,total) => list.map(([k,c])=>`<div style="display:flex;justify-content:space-between;font-size:.88rem;gap:10px"><span>${esc(k)}</span><b>${c}</b></div><div class="bar"><i style="width:${total?c*100/total:0}%"></i></div>`).join("");
+  const topics = `<h3>Temat më të zgjedhura</h3>`+bars(tList,n);
+  const tally = (key,title) => { const c={}; needsRows.forEach(r=>{ if(r[key]) c[r[key]]=(c[r[key]]||0)+1; }); return `<h3>${title}</h3>`+bars(Object.entries(c).sort((a,b)=>b[1]-a[1]),n); };
+  const txt = (key,title) => { const l=needsRows.map(r=>r[key]).filter(Boolean); return l.length?`<h3>${title}</h3>`+l.map(x=>`<div class="msg info" style="margin-top:8px">${esc(x)}</div>`).join(""):""; };
+  const others = needsRows.map(r=>r.topicOther).filter(Boolean);
+  $("#nBox").innerHTML = compTable + topics + (others.length?`<p class="note">Tema të tjera të sugjeruara: ${others.map(esc).join("; ")}</p>`:"")
+    + tally("format","Forma e preferuar e takimeve") + tally("time","Koha e përshtatshme") + tally("present","Gatishmëria për të prezantuar")
+    + tally("platform","Platforma e komunikimit") + tally("tech","Kushtet teknike në shkollë") + tally("school","Lloji i shkollës")
+    + txt("challenge","Sfidat kryesore") + txt("goodPractice","Praktika të suksesshme për t'u ndarë") + txt("support","Mbështetja e pritur") + txt("suggestions","Sugjerime të tjera");
+}
+$("#nXlsx").onclick = () => {
+  const head = ["Nr","Data","Niveli","Vitet e punës","Kategoria","Lloji i shkollës","Kushtet teknike","Emri",...SV_COMP.map(c=>c[1]),"Temat prioritare","Tjetër (temë)","Forma","Koha","Koha (tjetër)","Prezantim","Tema për prezantim","Platforma","Platforma (tjetër)","Sfida kryesore","Praktika të mira","Mbështetja e pritur","Sugjerime"];
+  const rows=[head].concat(needsRows.map((r,i)=>[i+1,r.createdMs?new Date(r.createdMs).toLocaleDateString("sq-AL"):"",r.level,r.years,r.category,r.school,r.tech,r.name||"",...SV_COMP.map(([k])=>r.ratings?.[k]??""),(r.topics||[]).join("; "),r.topicOther||"",r.format,r.time,r.timeOther||"",r.present,r.presentTopic||"",r.platform,r.platformOther||"",r.challenge||"",r.goodPractice||"",r.support||"",r.suggestions||""]));
+  downloadTable(rows,"pyetesori-nevojave-2026-2027","Pyetësori");
+};
+$("#nWipe").onclick = async () => {
+  if(!needsRows.length) return;
+  if(!confirm(`Do të fshihen përgjithmonë ${needsRows.length} përgjigje të pyetësorit. Ke shkarkuar Excel-in? Vazhdo?`)) return;
+  try{ await Promise.all(needsRows.map(r=>deleteDoc(doc(db,"needs",r.id)))); await loadNeedsAdmin(); flash($("#nMsg"),"Përgjigjet u fshinë.","ok"); }
+  catch(err){ console.error(err); flash($("#nMsg"),"Gabim gjatë fshirjes: "+(err.code||err.message),"err"); }
+};
 
 /* ---------- Kreditet vjetore ---------- */
 (function initYears(){
