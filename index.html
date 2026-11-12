@@ -129,6 +129,17 @@
   .btn.sm{padding:7px 14px;font-size:.82rem;border-radius:10px}
   .infobar .x{border:0;background:transparent;color:#5a6788;font-size:1rem;cursor:pointer;padding:4px}
 
+  /* Shenja për materiale / trajnime të reja */
+  nav button{position:relative}
+  .nbadge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#e03131;color:#fff;
+    font:800 .68rem/18px "Plus Jakarta Sans",system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff;animation:nbpulse 1.8s ease-in-out infinite}
+  .nbadge.hidden{display:none}
+  @keyframes nbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+  @media(min-width:760px){.nbadge{top:3px;left:auto;right:8px}}
+  .newtag{display:inline-block;vertical-align:middle;margin-left:8px;font-size:.66rem;font-weight:800;letter-spacing:.04em;background:#e03131;color:#fff;padding:2px 8px;border-radius:99px}
+  .mat.isnew{border-color:#f3b4b4;background:#fff7f7}
+  .infobar.alert{background:#fff4d6;color:#5c3d00;border-bottom-color:#f0d58a}
+
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--brand),#5b7cf0);color:#fff;border:0;border-radius:14px;padding:15px 22px;font:700 1rem "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,219,.28);transition:.15s}
   .btn:active{transform:scale(.98)}
   .btn:disabled{opacity:.6;cursor:wait}
@@ -255,11 +266,19 @@
   </div>
 </div>
 
+<div id="newSesBar" class="infobar alert hidden" role="status">
+  <span id="newSesTxt">📅 Trajnim i ri</span>
+  <div class="infobar-actions">
+    <button id="newSesGo" class="btn sm">Shiko</button>
+    <button id="newSesClose" class="x" aria-label="Mbyll">✕</button>
+  </div>
+</div>
+
 <nav>
   <button class="active" data-tab="prezenca">
     <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Prezenca</button>
   <button data-tab="materialet">
-    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Materialet</button>
+    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Materialet<span class="nbadge hidden" id="matBadge">0</span></button>
   <button data-tab="pyetesori" id="navSurvey" class="hidden">
     <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Pyetësori</button>
   <button data-tab="admin">
@@ -663,6 +682,25 @@ function renderOpenSessions(){
   $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}${s.openFrom&&s.openTo?" ("+esc(s.openFrom)+"–"+esc(s.openTo)+")":""}</option>`).join("");
   if(keep && openSessions.some(s=>s.id===keep)) $("#fSession").value = keep;
 }
+/* Njoftim brenda faqes kur krijohet trajnim i ri */
+const sesCreated = s => (s.createdAt && s.createdAt.toMillis) ? s.createdAt.toMillis() : 0;
+let newSesMax = 0;
+function checkNewSessions(all){
+  const max = all.reduce((m,s)=>Math.max(m,sesCreated(s)),0);
+  const seen = lsGet(LS_SES);
+  if(seen===null){ lsSet(LS_SES, max); return; }          // vizita e parë: pa njoftim për ato ekzistuese
+  if(isAdminUser){ lsSet(LS_SES, Math.max(seen,max)); return; }
+  const fresh = all.filter(s => s.open && sesCreated(s) > seen).sort((a,b)=>sesCreated(b)-sesCreated(a));
+  if(!fresh.length){ $("#newSesBar").classList.add("hidden"); return; }
+  newSesMax = max;
+  const s = fresh[0];
+  $("#newSesTxt").textContent = "📅 " + (fresh.length>1 ? fresh.length+" trajnime të reja, më i fundit: " : "Trajnim i ri: ") + s.title + (s.date ? " – " + fmtDate(s.date) : "");
+  $("#newSesBar").classList.remove("hidden");
+}
+function dismissNewSes(){ lsSet(LS_SES, Math.max(lsGet(LS_SES)||0, newSesMax)); $("#newSesBar").classList.add("hidden"); }
+$("#newSesClose").addEventListener("click", dismissNewSes);
+$("#newSesGo").addEventListener("click", () => { dismissNewSes(); $('nav button[data-tab="prezenca"]').click(); });
+
 async function loadOpenSessions(){
   if(!configured) return;
   try{
@@ -670,6 +708,7 @@ async function loadOpenSessions(){
     const all = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
     rawOpen = all.filter(s=>s.open);
     evalSessions = all.filter(s=>s.evalOpen);
+    checkNewSessions(all);
   }catch(err){ console.error(err); rawOpen=[]; evalSessions=[]; }
   renderOpenSessions();
   renderEval();
@@ -712,12 +751,34 @@ $("#attForm").addEventListener("submit", async e => {
   btn.disabled=false;
 });
 
-/* ---------- Materials ---------- */
+/* ---------- Të reja: materiale & trajnime ---------- */
+const LS_MAT="mat_seen_ms", LS_SES="ses_seen_ms";
+const lsGet = k => { try{ const v=localStorage.getItem(k); return v===null ? null : (Number(v)||0); }catch{ return 0; } };
+const lsSet = (k,v) => { try{ localStorage.setItem(k,String(v)); }catch{} };
+let isAdminUser = false;
+let matBadgeBase = null, matTagBase = null;   // matBadgeBase: pragu për shenjën në menu; matTagBase: pragu për etiketën "I RI" (fiks gjatë vizitës)
+const matMaxMs = () => allMaterials.reduce((m,x)=>Math.max(m,x.createdMs||0),0);
+function updateMatBadge(){
+  if(matBadgeBase===null){
+    const stored = lsGet(LS_MAT);
+    if(stored===null){ matBadgeBase = matTagBase = matMaxMs(); lsSet(LS_MAT, matBadgeBase); }   // vizita e parë: materialet ekzistuese nuk janë "të reja"
+    else matBadgeBase = matTagBase = stored;
+  }
+  const n = isAdminUser ? 0 : allMaterials.filter(m => (m.createdMs||0) > matBadgeBase).length;
+  const b = $("#matBadge"); b.textContent = n > 9 ? "9+" : n; b.classList.toggle("hidden", !n);
+}
+function markMaterialsSeen(){
+  if(matBadgeBase===null) updateMatBadge();
+  matBadgeBase = Math.max(matBadgeBase, matMaxMs()); lsSet(LS_MAT, matBadgeBase); updateMatBadge();
+}
+const isNewMat = m => !isAdminUser && matTagBase!==null && (m.createdMs||0) > matTagBase;
+
 let allMaterials=[];
 async function fetchMaterials(){
   const snap = await getDocs(collection(db,"materials"));
   allMaterials = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.month||"").localeCompare(a.month||"") || (b.createdMs||0)-(a.createdMs||0));
   updateTopicList();
+  updateMatBadge();
 }
 function kind(url){
   const u=(url||"").toLowerCase();
@@ -732,10 +793,11 @@ function kind(url){
 const arrow = `<svg viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>`;
 function matHtml(m, admin){
   const [cls,emoji,label] = kind(m.url);
+  const fresh = !admin && isNewMat(m);
   const inner = `<div class="ico ${cls}">${emoji}</div>
-    <div class="tx"><strong>${esc(m.title)}</strong><small>${esc(m.desc||label)}</small>${m.topic?`<span class="tag">${esc(m.topic)}</span>`:""}</div>`;
+    <div class="tx"><strong>${esc(m.title)}${fresh?'<span class="newtag">I RI</span>':""}</strong><small>${esc(m.desc||label)}</small>${m.topic?`<span class="tag">${esc(m.topic)}</span>`:""}</div>`;
   if(admin) return `<div class="mat">${inner}<div class="acts"><a class="btn sec sm" href="${esc(m.url)}" target="_blank" rel="noopener">Hap</a><button class="btn danger sm" data-delmat="${m.id}">Fshij</button></div></div>`;
-  return `<a class="mat" href="${esc(m.url)}" target="_blank" rel="noopener">${inner}<div class="go"><span>Hap</span>${arrow}</div></a>`;
+  return `<a class="mat${fresh?" isnew":""}" href="${esc(m.url)}" target="_blank" rel="noopener">${inner}<div class="go"><span>Hap</span>${arrow}</div></a>`;
 }
 let activeTopic="";
 function renderFilters(){
@@ -758,7 +820,7 @@ function renderMaterials(){
 async function loadMaterials(){
   if(!configured) return;
   $("#matList").innerHTML = `<div class="empty">Duke ngarkuar…</div>`;
-  try{ await fetchMaterials(); renderMaterials(); renderAdminMaterials(); }
+  try{ await fetchMaterials(); renderMaterials(); renderAdminMaterials(); markMaterialsSeen(); }
   catch(err){ console.error(err); $("#matList").innerHTML = `<div class="msg err">Gabim gjatë ngarkimit të materialeve.</div>`; }
 }
 $("#matSearch").addEventListener("input", renderMaterials);
@@ -767,6 +829,8 @@ $("#matFilters").addEventListener("click", e => { const b=e.target.closest("butt
 /* ---------- Admin ---------- */
 if(configured) onAuthStateChanged(auth, user => {
   const ok = user && user.email && user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+  isAdminUser = !!ok;
+  if(ok){ $("#newSesBar").classList.add("hidden"); updateMatBadge(); }
   $("#loginCard").classList.toggle("hidden", !!ok);
   $("#adminArea").classList.toggle("hidden", !ok);
   if(ok) loadAdmin();
@@ -1232,6 +1296,18 @@ async function sendPush(title, body){
 
 /* ---------- Start ---------- */
 loadOpenSessions();
+if(configured) fetchMaterials().catch(console.error);   // për shenjën "e re" në menu që në hapje
+/* Rifreskim i qetë çdo 2 minuta (dhe kur faqja rikthehet në plan të parë) */
+async function refreshNew(){
+  if(!configured || document.hidden) return;
+  try{
+    await fetchMaterials();
+    if(!$("#view-materialet").classList.contains("hidden")){ renderMaterials(); markMaterialsSeen(); }
+    await loadOpenSessions();
+  }catch(err){ console.error(err); }
+}
+setInterval(refreshNew, 120000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) refreshNew(); });
 
 </script>
 </body>
