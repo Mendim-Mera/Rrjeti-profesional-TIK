@@ -837,32 +837,57 @@ $("#installClose")?.addEventListener("click", () => $("#installBar").classList.a
 
 /* ---------- Njoftime push (OneSignal) ---------- */
 const PUSH_READY = ONESIGNAL_APP_ID && !ONESIGNAL_APP_ID.startsWith("ZËVENDËSO");
+let osInitError = null, osReady = false;
 if(PUSH_READY){
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   const osScript = document.createElement("script");
   osScript.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"; osScript.defer = true;
+  osScript.onerror = () => { osInitError = "Nuk u ngarkua skripti i OneSignal (interneti ose bllokues reklamash)."; };
   document.head.appendChild(osScript);
   OneSignalDeferred.push(async (OneSignal) => {
-    await OneSignal.init({
-      appId: ONESIGNAL_APP_ID,
-      serviceWorkerPath: "Rrjeti-profesional-TIK/sw.js",
-      serviceWorkerParam: { scope: "/Rrjeti-profesional-TIK/" },
-    });
-    const optedIn = await OneSignal.User.PushSubscription.optedIn;
-    if(optedIn){ localStorage.setItem("notif_enabled","1"); }
-    else if(!localStorage.getItem("notif_dismissed") && Notification.permission==="default"){
-      $("#notifBar").classList.remove("hidden");
-    }
+    try{
+      await OneSignal.init({
+        appId: ONESIGNAL_APP_ID,
+        serviceWorkerPath: "Rrjeti-profesional-TIK/sw.js",
+        serviceWorkerParam: { scope: "/Rrjeti-profesional-TIK/" },
+        notifyButton: { enable: false },
+        welcomeNotification: { disable: true },
+      });
+      osReady = true;
+      const optedIn = await OneSignal.User.PushSubscription.optedIn;
+      if(optedIn){ localStorage.setItem("notif_enabled","1"); }
+      else if(!localStorage.getItem("notif_dismissed") && Notification.permission==="default"){
+        $("#notifBar").classList.remove("hidden");
+      }
+    }catch(err){ osInitError = (err && err.message) || String(err); console.error("OneSignal init:", err); }
   });
 }
 $("#notifClose")?.addEventListener("click", () => { localStorage.setItem("notif_dismissed","1"); $("#notifBar").classList.add("hidden"); });
 $("#notifBtn")?.addEventListener("click", async () => {
   if(!PUSH_READY){ alert("Njoftimet s'janë konfiguruar ende."); return; }
-  try{
-    await OneSignalDeferred.push(async (OneSignal) => { await OneSignal.Notifications.requestPermission(); });
-    $("#notifBar").classList.add("hidden");
-    localStorage.setItem("notif_enabled","1");
-  }catch(err){ console.error("Njoftimet:", err); alert("Nuk u aktivizuan dot njoftimet në këtë shfletues/pajisje."); }
+  if(osInitError){ alert("OneSignal nuk u nis: " + osInitError); return; }
+  if(!osReady){ alert("OneSignal po ngarkohet ende. Prit pak sekonda dhe provo përsëri."); return; }
+  OneSignalDeferred.push(async (OneSignal) => {
+    try{
+      await OneSignal.Notifications.requestPermission();
+      if(Notification.permission === "denied"){
+        alert("Njoftimet janë bllokuar për këtë faqe. Lejoji te Cilësimet e shfletuesit → Njoftimet, pastaj provo përsëri.");
+        return;
+      }
+      let opted = await OneSignal.User.PushSubscription.optedIn;
+      if(!opted && Notification.permission === "granted"){
+        await OneSignal.User.PushSubscription.optIn();
+        opted = await OneSignal.User.PushSubscription.optedIn;
+      }
+      if(opted){
+        localStorage.setItem("notif_enabled","1");
+        $("#notifBar").classList.add("hidden");
+        alert("Njoftimet u aktivizuan ✓");
+      }else{
+        alert("Leja u dha, por pajisja nuk u regjistrua te OneSignal. Kontrollo që Site URL te OneSignal është https://mendim-mera.github.io/Rrjeti-profesional-TIK/");
+      }
+    }catch(err){ console.error("Njoftimet:", err); alert("Gabim: " + ((err && err.message) || err)); }
+  });
 });
 
 /* Thirret pas çdo trajnimi/materiali të ri, dërgon njoftimin përmes
