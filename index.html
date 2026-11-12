@@ -16,12 +16,12 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Rrjeti Profesional TIK – ZVAP Dibër">
 <meta property="og:description" content="Regjistro prezencën, gjej materialet dhe njoftimet e trajnimeve mujore të rrjetit TIK (AMU+AML).">
-<meta property="og:image" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/pwa-assets/og-image.png">
+<meta property="og:image" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/pwa-assets/og-image.png?v=2">
 <meta property="og:url" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Rrjeti Profesional TIK – ZVAP Dibër">
 <meta name="twitter:description" content="Regjistro prezencën dhe gjej materialet e trajnimeve mujore.">
-<meta name="twitter:image" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/pwa-assets/og-image.png">
+<meta name="twitter:image" content="https://mendim-mera.github.io/Rrjeti-profesional-TIK/pwa-assets/og-image.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -372,6 +372,11 @@
             <div><label for="sVenue">Vendi / Platforma</label><input id="sVenue" required maxlength="100" placeholder="p.sh. Shkolla … ose Zoom"></div>
             <div><label for="sHours">Kohëzgjatja (orë)</label><input id="sHours" type="number" required min="0.5" max="8" step="0.5" value="2"></div>
           </div>
+          <div class="row">
+            <div><label for="sFrom">Regjistrimi hapet nga ora <span style="font-weight:400;color:var(--muted)">(opsionale)</span></label><input id="sFrom" type="time"></div>
+            <div><label for="sTo">Regjistrimi mbyllet në orën <span style="font-weight:400;color:var(--muted)">(opsionale)</span></label><input id="sTo" type="time"></div>
+          </div>
+          <p class="sub" style="margin:-4px 0 12px">Nëse i plotëson, mësuesit mund ta regjistrojnë prezencën vetëm në datën e trajnimit dhe vetëm brenda këtij intervali. Nëse i lë bosh, trajnimi mbetet i hapur derisa ta mbyllësh vetë.</p>
           <button class="btn block" type="submit">Krijo trajnim</button>
         </form>
         <div id="sesMsg"></div>
@@ -513,18 +518,49 @@ function sigData(){
 }
 
 /* ---------- Teachers: sessions + attendance ---------- */
-let openSessions = [];
+let openSessions = [], rawOpen = [];
+/* Gjendja e një trajnimi të hapur sipas orës së pajisjes: "open" | "before" | "after" */
+function sessState(s, now = new Date()){
+  if(!s.openFrom || !s.openTo) return "open";
+  const p = n => String(n).padStart(2,"0");
+  const today = now.getFullYear()+"-"+p(now.getMonth()+1)+"-"+p(now.getDate());
+  const hm = p(now.getHours())+":"+p(now.getMinutes());
+  if(s.date > today) return "before";
+  if(s.date < today) return "after";
+  if(hm < s.openFrom) return "before";
+  if(hm >= s.openTo) return "after";
+  return "open";
+}
+function renderOpenSessions(){
+  const now = new Date();
+  openSessions = rawOpen.filter(s => sessState(s, now) === "open");
+  const has = openSessions.length>0;
+  $("#attForm").classList.toggle("hidden",!has);
+  $("#noSession").classList.toggle("hidden",has);
+  if(!has){
+    const p2 = n => String(n).padStart(2,"0");
+    const todayStr = now.getFullYear()+"-"+p2(now.getMonth()+1)+"-"+p2(now.getDate());
+    const soon = rawOpen.filter(x => sessState(x, now) === "before" && x.date === todayStr);
+    const closed = rawOpen.filter(s => sessState(s, now) === "after");
+    let html = '<span class="ico">📭</span>Aktualisht nuk ka asnjë trajnim të hapur për regjistrim prezence.';
+    if(soon.length) html = '<span class="ico">⏳</span>Regjistrimi për "'+esc(soon[0].title)+'" hapet sot në ora <b>'+esc(soon[0].openFrom)+'</b>.';
+    else if(closed.length){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
+    $("#noSession").innerHTML = html;
+  }
+  const keep = $("#fSession").value;
+  $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}${s.openFrom&&s.openTo?" ("+esc(s.openFrom)+"–"+esc(s.openTo)+")":""}</option>`).join("");
+  if(keep && openSessions.some(s=>s.id===keep)) $("#fSession").value = keep;
+}
 async function loadOpenSessions(){
   if(!configured) return;
   try{
     const snap = await getDocs(collection(db,"sessions"));
-    openSessions = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.open).sort((a,b)=>b.date.localeCompare(a.date));
-  }catch(err){ console.error(err); openSessions=[]; }
-  const has = openSessions.length>0;
-  $("#attForm").classList.toggle("hidden",!has);
-  $("#noSession").classList.toggle("hidden",has);
-  $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}</option>`).join("");
+    rawOpen = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.open).sort((a,b)=>b.date.localeCompare(a.date));
+  }catch(err){ console.error(err); rawOpen=[]; }
+  renderOpenSessions();
 }
+/* Rivlerëso hapjen/mbylljen çdo 20 sekonda, pa rifreskuar faqen */
+setInterval(() => { if(rawOpen.length) renderOpenSessions(); }, 20000);
 /* ID unike: trajnimi + emri e mbiemri të normalizuar (pa shkronja të mëdha, pa ë/ç, pa hapësira të tepërta) */
 function normName(t){ return t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim().replace(/ /g,"-"); }
 $("#attForm").addEventListener("submit", async e => {
@@ -533,6 +569,8 @@ $("#attForm").addEventListener("submit", async e => {
   if(!hasInk) return flash(msg,"Ju lutem vendosni firmën tuaj.","err");
   const s = openSessions.find(x=>x.id===$("#fSession").value);
   if(!s) return flash(msg,"Zgjidhni trajnimin.","err");
+  const fresh = rawOpen.find(x=>x.id===s.id);
+  if(fresh && sessState(fresh) !== "open"){ renderOpenSessions(); return flash(msg,"Regjistrimi për këtë trajnim është mbyllur.","err"); }
   const first=$("#fFirst").value.trim(), last=$("#fLast").value.trim();
   const key = "att_"+s.id+"_"+normName(first+" "+last);
   const attId = s.id+"_"+normName(first)+"_"+normName(last);
@@ -634,7 +672,7 @@ async function loadSessionsAdmin(){
   const snap = await getDocs(collection(db,"sessions"));
   allSessions = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
   $("#sesList").innerHTML = allSessions.length ? allSessions.map(s=>`
-    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span></strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë</small></div>
+    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span></strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë${s.openFrom&&s.openTo?" · regjistrim "+esc(s.openFrom)+"–"+esc(s.openTo):""}</small></div>
     <div class="acts"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
     : `<div class="empty"><span class="ico">🗓</span>Ende nuk keni krijuar trajnime.</div>`;
   const prev = $("#attSession").value;
@@ -647,8 +685,11 @@ $("#sesForm").addEventListener("submit", async e => {
   e.preventDefault();
   try{
     const sTitleVal = $("#sTitle").value.trim(), sDateVal = $("#sDate").value;
-    await addDoc(collection(db,"sessions"),{date:sDateVal,title:sTitleVal,venue:$("#sVenue").value.trim(),hours:Number($("#sHours").value)||2,open:true,createdAt:serverTimestamp()});
-    $("#sTitle").value=""; $("#sesMsg").innerHTML=""; await loadSessionsAdmin();
+    const fromV = $("#sFrom").value, toV = $("#sTo").value;
+    if((fromV && !toV) || (!fromV && toV)) return flash($("#sesMsg"),"Plotëso të dyja orët (nga dhe deri), ose lëri të dyja bosh.","err");
+    if(fromV && toV && toV <= fromV) return flash($("#sesMsg"),"Ora e mbylljes duhet të jetë pas orës së hapjes.","err");
+    await addDoc(collection(db,"sessions"),{date:sDateVal,title:sTitleVal,venue:$("#sVenue").value.trim(),hours:Number($("#sHours").value)||2,open:true,openFrom:$("#sFrom").value||"",openTo:$("#sTo").value||"",createdAt:serverTimestamp()});
+    $("#sTitle").value=""; $("#sFrom").value=""; $("#sTo").value=""; $("#sesMsg").innerHTML=""; await loadSessionsAdmin();
     sendPush("📅 Trajnim i ri", sTitleVal + (sDateVal ? " – " + fmtDate(sDateVal) : ""));
   }catch(err){
     console.error(err);
