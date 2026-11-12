@@ -862,6 +862,7 @@ if(PUSH_READY){
     }catch(err){ osInitError = (err && err.message) || String(err); console.error("OneSignal init:", err); }
   });
 }
+if(/[?&]diag=1/.test(location.search)) $("#notifBar").classList.remove("hidden");
 $("#notifClose")?.addEventListener("click", () => { localStorage.setItem("notif_dismissed","1"); $("#notifBar").classList.add("hidden"); });
 $("#notifBtn")?.addEventListener("click", async () => {
   if(!PUSH_READY){ alert("Njoftimet s'janë konfiguruar ende."); return; }
@@ -883,8 +884,17 @@ $("#notifBtn")?.addEventListener("click", async () => {
         localStorage.setItem("notif_enabled","1");
         $("#notifBar").classList.add("hidden");
         let sid = "", oid = "";
-        for(let i=0;i<10 && !sid;i++){ try{ sid = OneSignal.User.PushSubscription.id || ""; oid = OneSignal.User.onesignalId || ""; }catch(e){} if(!sid) await new Promise(r=>setTimeout(r,500)); }
-        alert("Njoftimet u aktivizuan ✓\n\nApp ID: " + ONESIGNAL_APP_ID + "\nSubscription ID: " + (sid || "ende pa ID (pajisja nuk u regjistrua te OneSignal)") + "\nOneSignal ID: " + (oid || "-"));
+        for(let i=0;i<12 && !sid;i++){ try{ sid = OneSignal.User.PushSubscription.id || ""; oid = OneSignal.User.onesignalId || ""; }catch(e){} if(!sid) await new Promise(r=>setTimeout(r,500)); }
+        let dbg = "";
+        try{
+          const regs = await navigator.serviceWorker.getRegistrations();
+          dbg += "\nSW: " + (regs.map(r => r.scope.replace(location.origin,"") + (r.active ? " aktiv" : " jo-aktiv")).join(" | ") || "asnjë");
+          let ps = null;
+          for(const r of regs){ try{ const x = await r.pushManager.getSubscription(); if(x){ ps = x; break; } }catch(e){} }
+          dbg += "\nPush shfletuesi: " + (ps ? "po (" + ps.endpoint.split("/")[2] + ")" : "jo");
+        }catch(e){ dbg += "\nSW gabim: " + e.message; }
+        try{ dbg += "\nToken: " + (OneSignal.User.PushSubscription.token ? "po" : "jo"); }catch(e){}
+        alert("Njoftimet u aktivizuan ✓\n\nSubscription ID: " + (sid || "ENDE PA ID") + "\nOneSignal ID: " + (oid || "-") + dbg);
       }else{
         alert("Leja u dha, por pajisja nuk u regjistrua te OneSignal. Kontrollo që Site URL te OneSignal është https://mendim-mera.github.io/Rrjeti-profesional-TIK/");
       }
