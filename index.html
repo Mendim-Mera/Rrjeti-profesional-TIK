@@ -547,9 +547,16 @@ function renderOpenSessions(){
     const closed = rawOpen.filter(s => sessState(s, now) === "after");
     let html = '<span class="ico">📭</span>Aktualisht nuk ka asnjë trajnim të hapur për regjistrim prezence.';
     if(soon.length) html = '<span class="ico">⏳</span>Regjistrimi për "'+esc(soon[0].title)+'" hapet sot në ora <b>'+esc(soon[0].openFrom)+'</b>.';
+    else if(rawOpen.some(x => sessState(x, now) === "before")) html = '<span class="ico">📅</span>Aktualisht nuk ka regjistrim të hapur. Shih trajnimet e ardhshme më poshtë.';
     else if(closed.length){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
     $("#noSession").innerHTML = html;
   }
+  /* Trajnimet e ardhshme (regjistrimi ende s'ka çelur): shfaqen gjithmonë te Prezenca */
+  const upcoming = rawOpen.filter(s => sessState(s, now) === "before").sort((a,b)=>a.date.localeCompare(b.date));
+  let up = $("#upcoming");
+  if(!up){ up = document.createElement("div"); up.id = "upcoming"; $("#noSession").parentNode.insertBefore(up, $("#noSession").nextSibling); }
+  up.innerHTML = upcoming.length ? '<h3 style="margin:18px 0 8px;font-size:1rem">📅 Trajnimet e ardhshme</h3>' + upcoming.map(s =>
+    '<div class="mat"><div class="ico">📅</div><div class="tx"><strong>'+esc(s.title)+'</strong><small>'+fmtDate(s.date)+(s.venue?" · "+esc(s.venue):"")+(s.openFrom&&s.openTo?" · regjistrimi "+esc(s.openFrom)+"–"+esc(s.openTo):"")+'</small></div></div>').join("") : "";
   const keep = $("#fSession").value;
   $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}${s.openFrom&&s.openTo?" ("+esc(s.openFrom)+"–"+esc(s.openTo)+")":""}</option>`).join("");
   if(keep && openSessions.some(s=>s.id===keep)) $("#fSession").value = keep;
