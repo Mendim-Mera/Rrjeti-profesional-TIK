@@ -260,7 +260,7 @@
     <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Prezenca</button>
   <button data-tab="materialet">
     <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Materialet</button>
-  <button data-tab="pyetesori">
+  <button data-tab="pyetesori" id="navSurvey" class="hidden">
     <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Pyetësori</button>
   <button data-tab="admin">
     <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Drejtuesi</button>
@@ -412,6 +412,7 @@
         <div class="qsec"><h3>E. Sfidat dhe pyetje të hapura</h3>
           <label for="svChallenge">Cila është sfida kryesore që hasni sot në mësimdhënien e TIK-ut?</label><textarea id="svChallenge" name="challenge" rows="3" maxlength="1000"></textarea>
           <label for="svGood">Cila praktikë ose aktivitet ka funksionuar mirë te nxënësit tuaj dhe do të donit ta ndanit me kolegët?</label><textarea id="svGood" name="goodPractice" rows="3" maxlength="1000"></textarea>
+          <label for="svSupport">Çfarë mbështetje prisni nga rrjeti dhe nga drejtuesi i tij?</label><textarea id="svSupport" name="support" rows="3" maxlength="1000"></textarea>
           <label for="svSugg">Sugjerime të tjera për veprimtaritë e rrjetit</label><textarea id="svSugg" name="suggestions" rows="3" maxlength="1000"></textarea>
         </div>
 
@@ -966,6 +967,9 @@ function svRender(){
   $("#svClosed").classList.toggle("hidden", svOpen);
   $("#svDone").classList.toggle("hidden", !(svOpen && done && !svForceForm));
   $("#svForm").classList.toggle("hidden", !(svOpen && (!done || svForceForm)));
+  // Skeda "Pyetësori" shfaqet në menu vetëm kur pyetësori është i hapur
+  $("#navSurvey").classList.toggle("hidden", !svOpen);
+  if(!svOpen && !$("#view-pyetesori").classList.contains("hidden")) $('nav button[data-tab="prezenca"]').click();
 }
 let svForceForm = false;
 async function loadSurveyState(){
@@ -976,6 +980,7 @@ async function loadSurveyState(){
   }catch(err){ console.error(err); svOpen = false; }
   svRender();
 }
+loadSurveyState(); // kontrollo gjendjen sapo hapet faqja
 $("#svAgain").onclick = () => { svForceForm = true; svRender(); };
 function svToggleOther(cbSel, wrapSel){ const w=$(wrapSel); w.classList.toggle("hidden", !$(cbSel).checked); }
 $("#svForm").addEventListener("change", e => {
