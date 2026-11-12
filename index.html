@@ -550,8 +550,13 @@ function renderOpenSessions(){
     const soon = rawOpen.filter(x => sessState(x, now) === "before" && x.date === todayStr);
     const closed = rawOpen.filter(s => sessState(s, now) === "after");
     let html = '<span class="ico">📭</span>Aktualisht nuk ka asnjë trajnim të hapur për regjistrim prezence.';
-    if(soon.length) html = '<span class="ico">⏳</span>Regjistrimi për "'+esc(soon[0].title)+'" hapet sot në ora <b>'+esc(soon[0].openFrom)+'</b>.';
-    else if(rawOpen.some(x => sessState(x, now) === "before")) html = '<span class="ico">📅</span>Aktualisht nuk ka regjistrim të hapur. Shih trajnimet e ardhshme më poshtë.';
+    const nextUp = rawOpen.filter(x => sessState(x, now) === "before").sort((x,y)=>x.date.localeCompare(y.date)||(x.openFrom||"").localeCompare(y.openFrom||""))[0];
+    if(nextUp){
+      const diff = Math.round((new Date(nextUp.date+"T00:00:00") - new Date(todayStr+"T00:00:00"))/86400000);
+      const when = diff<=0 ? "sot" : diff===1 ? "nesër" : "pas "+diff+" ditësh";
+      const hrs = nextUp.openFrom && nextUp.openTo ? ' nga ora <b>'+esc(nextUp.openFrom)+'</b> deri në <b>'+esc(nextUp.openTo)+'</b>' : '';
+      html = '<span class="ico">⏳</span><b>Regjistrimi i prezencës nuk është hapur ende.</b><br>Trajnimi i radhës: "'+esc(nextUp.title)+'"<br>📅 <b>'+fmtDate(nextUp.date)+'</b> ('+when+')'+hrs+'.<br><small>Formulari hapet automatikisht në atë kohë; mund ta lini faqen hapur.</small>';
+    }
     else if(closed.length){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
     $("#noSession").innerHTML = html;
   }
