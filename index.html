@@ -882,7 +882,9 @@ $("#notifBtn")?.addEventListener("click", async () => {
       if(opted){
         localStorage.setItem("notif_enabled","1");
         $("#notifBar").classList.add("hidden");
-        alert("Njoftimet u aktivizuan ✓");
+        let sid = "", oid = "";
+        for(let i=0;i<10 && !sid;i++){ try{ sid = OneSignal.User.PushSubscription.id || ""; oid = OneSignal.User.onesignalId || ""; }catch(e){} if(!sid) await new Promise(r=>setTimeout(r,500)); }
+        alert("Njoftimet u aktivizuan ✓\n\nApp ID: " + ONESIGNAL_APP_ID + "\nSubscription ID: " + (sid || "ende pa ID (pajisja nuk u regjistrua te OneSignal)") + "\nOneSignal ID: " + (oid || "-"));
       }else{
         alert("Leja u dha, por pajisja nuk u regjistrua te OneSignal. Kontrollo që Site URL te OneSignal është https://mendim-mera.github.io/Rrjeti-profesional-TIK/");
       }
