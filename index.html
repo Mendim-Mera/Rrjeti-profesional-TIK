@@ -347,6 +347,7 @@
           <span>Konfirmoj se isha prezent në këtë trajnim. Pranoj që emri, kontakti dhe firma ime të ruhen nga drejtuesi i rrjetit vetëm për evidencën e prezencës dhe vlerësimin me kredite, sipas Ligjit nr. 124/2024 "Për mbrojtjen e të dhënave personale".</span>
         </label>
         <button class="btn block" id="fSubmit" type="submit">Dërgo prezencën</button>
+        <button class="btn sec block hidden" id="fBack" type="button" style="margin-top:10px">← Kthehu pa plotësuar</button>
         <div id="fMsg"></div>
         <p class="note">🔒 Të dhënat shihen vetëm nga drejtuesi i rrjetit dhe ruhen vetëm për periudhën e nevojshme të vlerësimit me kredite dhe arkivimit.</p>
       </form>
@@ -651,6 +652,7 @@ function sessState(s, now = new Date()){
   return "open";
 }
 /* Trajnimet për të cilat kjo pajisje e ka dërguar tashmë prezencën fshihen nga formulari */
+const reopened = new Set();   /* trajnimet e rihapura me "Plotëso përsëri" (për butonin "Kthehu") */
 const attDoneKey = id => "attdone_"+id;
 const isAttDone = id => { try{ return !!localStorage.getItem(attDoneKey(id)); }catch{ return false; } };
 function renderOpenSessions(){
@@ -674,7 +676,7 @@ function renderOpenSessions(){
       const hrs = nextUp.openFrom && nextUp.openTo ? ' nga ora <b>'+esc(nextUp.openFrom)+'</b> deri në <b>'+esc(nextUp.openTo)+'</b>' : '';
       html = '<span class="ico">⏳</span><b>Regjistrimi i prezencës nuk është hapur ende.</b><br>Trajnimi i radhës: "'+esc(nextUp.title)+'"<br>📅 <b>'+fmtDate(nextUp.date)+'</b> ('+when+')'+hrs+'.<br><small>Formulari hapet automatikisht në atë kohë; mund ta lini faqen hapur.</small>';
     }
-    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'<br><button class="btn sec sm" type="button" data-redo="'+esc(doneNow[0].id)+'" style="margin-top:12px">Regjistro një koleg tjetër nga ky telefon</button>';
+    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'<br><button class="btn sec sm" type="button" data-redo="'+esc(doneNow[0].id)+'" style="margin-top:12px">Plotëso përsëri (ose për një koleg nga ky telefon)</button>';
     else if(closed.length && !nextUp){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
     $("#noSession").innerHTML = html;
   }
@@ -684,6 +686,7 @@ function renderOpenSessions(){
   if(!up){ up = document.createElement("div"); up.id = "upcoming"; $("#noSession").parentNode.insertBefore(up, $("#noSession").nextSibling); }
   up.innerHTML = upcoming.length ? '<h3 style="margin:18px 0 8px;font-size:1rem">📅 Trajnimet e ardhshme</h3>' + upcoming.map(s =>
     '<div class="mat"><div class="ico">📅</div><div class="tx"><strong>'+esc(s.title)+'</strong><small>'+fmtDate(s.date)+(s.venue?" · "+esc(s.venue):"")+(s.openFrom&&s.openTo?" · regjistrimi "+esc(s.openFrom)+"–"+esc(s.openTo):"")+'</small></div></div>').join("") : "";
+  $("#fBack").classList.toggle("hidden", !openSessions.some(s => reopened.has(s.id)));
   const keep = $("#fSession").value;
   $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}${s.openFrom&&s.openTo?" ("+esc(s.openFrom)+"–"+esc(s.openTo)+")":""}</option>`).join("");
   if(keep && openSessions.some(s=>s.id===keep)) $("#fSession").value = keep;
@@ -722,6 +725,12 @@ async function loadOpenSessions(){
 $("#noSession").addEventListener("click", e => {
   const b = e.target.closest("button[data-redo]"); if(!b) return;
   try{ localStorage.removeItem(attDoneKey(b.dataset.redo)); }catch{}
+  reopened.add(b.dataset.redo);
+  renderOpenSessions();
+});
+$("#fBack").addEventListener("click", () => {
+  reopened.forEach(id => { try{ localStorage.setItem(attDoneKey(id),"1"); }catch{} });
+  reopened.clear(); $("#attForm").reset(); clearSig(); $("#fMsg").innerHTML="";
   renderOpenSessions();
 });
 /* Rivlerëso hapjen/mbylljen çdo 20 sekonda, pa rifreskuar faqen */
@@ -739,7 +748,7 @@ $("#attForm").addEventListener("submit", async e => {
   const first=$("#fFirst").value.trim(), last=$("#fLast").value.trim();
   const key = "att_"+s.id+"_"+normName(first+" "+last);
   const attId = s.id+"_"+normName(first)+"_"+normName(last);
-  if(localStorage.getItem(key)) return flash(msg,"Prezenca për këtë emër është dërguar tashmë në këtë pajisje.","err");
+  /* Pa bllokim lokal: nëse prezenca ekziston në databazë, rregullat e Firestore e refuzojnë (permission-denied); nëse drejtuesi e ka fshirë, lejohet përsëri */
   btn.disabled=true;
   try{
     await setDoc(doc(db,"attendance",attId),{
@@ -751,6 +760,7 @@ $("#attForm").addEventListener("submit", async e => {
     });
     localStorage.setItem(key,"1");
     try{ localStorage.setItem(attDoneKey(s.id),"1"); }catch{}
+    reopened.clear();
     $("#attForm").reset(); clearSig();
     flash(msg,"✓ Faleminderit! Prezenca u regjistrua me sukses.","ok");
     showEval(s.id);
@@ -758,7 +768,7 @@ $("#attForm").addEventListener("submit", async e => {
     ($("#noSession").classList.contains("hidden") ? msg : $("#noSession")).scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){
     console.error(err);
-    if(err && err.code==="permission-denied"){ localStorage.setItem(key,"1"); flash(msg,"Ky emër dhe mbiemër ka dërguar tashmë prezencën për këtë trajnim.","err"); }
+    if(err && err.code==="permission-denied"){ flash(msg,"Ky emër dhe mbiemër ka dërguar tashmë prezencën për këtë trajnim.","err"); }
     else flash(msg,"Gabim gjatë dërgimit. Provoni përsëri.","err");
   }
   btn.disabled=false;
