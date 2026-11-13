@@ -354,13 +354,15 @@
     </div>
 
     <div class="card hidden" id="evalCard">
-      <h2>Vlerëso trajnimin</h2>
-      <p class="sub" id="evalSub">Opsionale dhe anonime. Na ndihmon ta përmirësojmë rrjetin.</p>
+      <h2>Vlerëso këtë takim</h2>
+      <p class="sub" id="evalSub">Opsionale dhe anonime. Na ndihmon ta përmirësojmë takimin e radhës.</p>
       <form id="evalForm">
         <div id="eQs"></div>
-        <label for="eImprove">Çfarë duhet përmirësuar në funksionimin e rrjetit?</label>
+        <label for="eLearned">Çfarë do të zbatoni konkretisht në klasë nga ky takim?</label>
+        <textarea id="eLearned" rows="2" maxlength="800" placeholder="p.sh. një teknikë, mjet ose aktivitet që provuat sot"></textarea>
+        <label for="eImprove">Çfarë do ta bënte këtë takim më të dobishëm?</label>
         <textarea id="eImprove" rows="2" maxlength="800"></textarea>
-        <label for="eTopics">Sugjerime për tematika të ardhshme</label>
+        <label for="eTopics">Temë ose aktivitet që dëshironi në takimin e ardhshëm</label>
         <textarea id="eTopics" rows="2" maxlength="800"></textarea>
         <button class="btn block" type="submit">Dërgo vlerësimin</button>
         <div id="eMsg"></div>
@@ -432,7 +434,6 @@
         <div class="qsec"><h3>E. Sfidat dhe pyetje të hapura</h3>
           <label for="svChallenge">Cila është sfida kryesore që hasni sot në mësimdhënien e TIK-ut?</label><textarea id="svChallenge" name="challenge" rows="3" maxlength="1000"></textarea>
           <label for="svGood">Cila praktikë ose aktivitet ka funksionuar mirë te nxënësit tuaj dhe do të donit ta ndanit me kolegët?</label><textarea id="svGood" name="goodPractice" rows="3" maxlength="1000"></textarea>
-          <label for="svSupport">Çfarë mbështetje prisni nga rrjeti dhe nga drejtuesi i tij?</label><textarea id="svSupport" name="support" rows="3" maxlength="1000"></textarea>
           <label for="svSugg">Sugjerime të tjera për veprimtaritë e rrjetit</label><textarea id="svSugg" name="suggestions" rows="3" maxlength="1000"></textarea>
         </div>
 
@@ -503,8 +504,8 @@
       </div>
 
       <div class="card noprint">
-        <h2>Vlerësimet e mësuesve</h2>
-        <p class="sub" id="evalCount">Për trajnimin e zgjedhur më lart.</p>
+        <h2>Vlerësimet e takimit</h2>
+        <p class="sub" id="evalCount">Për takimin e zgjedhur te lista e prezencës më lart.</p>
         <div id="evalBox"></div>
       </div>
 
@@ -1033,7 +1034,7 @@ $("#matImport").addEventListener("click", async () => {
 });
 
 /* ---------- Vlerësimi nga mësuesit ---------- */
-const EVAL_Q=[["q1","Sa i dobishëm ka qenë rrjeti për zhvillimin tuaj profesional?"],["q2","Sa të përshtatshme kanë qenë temat e trajtuara?"],["q3","Sa aktivisht jeni përfshirë në veprimtaritë e rrjetit?"]];
+const EVAL_Q=[["q1","Sa e qartë ishte tema dhe qëllimi i këtij takimi?"],["q2","Sa e dobishme ishte tema për punën tuaj në klasë?"],["q3","Sa e frytshme ishte mënyra e zhvillimit (prezantimi, pjesa praktike, diskutimi)?"],["q4","Sa gati ndiheni ta zbatoni në klasë atë që u trajtua në këtë takim?"]];
 const EVAL_OPT=["Shumë","Mesatarisht","Pak"];
 $("#eQs").innerHTML=EVAL_Q.map(([k,t])=>`<label>${t} <b>*</b></label><div class="chips">${EVAL_OPT.map((o,i)=>`<label class="chip"><input type="radio" name="${k}" value="${o}" ${i===0?"required":""}><span>${o}</span></label>`).join("")}</div>`).join("");
 let evalSession="";
@@ -1042,7 +1043,7 @@ function renderEval(){
   const s = evalSessions.find(x => { try{ return !localStorage.getItem("eval_"+x.id); }catch{ return true; } });
   if(!s){ if($("#evalThanks").classList.contains("hidden")) $("#evalCard").classList.add("hidden"); return; }
   evalSession = s.id;
-  $("#evalSub").textContent = "Trajnimi: " + s.title + " (" + fmtDate(s.date) + "). Opsionale dhe anonime.";
+  $("#evalSub").textContent = "Takimi: " + s.title + " (" + fmtDate(s.date) + "). Opsionale dhe anonime.";
   $("#evalForm").classList.remove("hidden"); $("#evalThanks").classList.add("hidden");
   $("#evalCard").classList.remove("hidden");
 }
@@ -1050,7 +1051,7 @@ function showEval(){ renderEval(); }
 $("#evalForm").addEventListener("submit", async e => {
   e.preventDefault(); const f=new FormData(e.target);
   try{
-    await addDoc(collection(db,"evaluations"),{sessionId:evalSession,q1:f.get("q1"),q2:f.get("q2"),q3:f.get("q3"),improve:$("#eImprove").value.trim(),topics:$("#eTopics").value.trim(),createdAt:serverTimestamp()});
+    await addDoc(collection(db,"evaluations"),{sessionId:evalSession,q1:f.get("q1"),q2:f.get("q2"),q3:f.get("q3"),q4:f.get("q4"),learned:$("#eLearned").value.trim(),improve:$("#eImprove").value.trim(),topics:$("#eTopics").value.trim(),createdAt:serverTimestamp()});
     try{ localStorage.setItem("eval_"+evalSession,"1"); }catch{}
     e.target.reset(); e.target.classList.add("hidden"); $("#evalThanks").classList.remove("hidden");
   }catch(err){ console.error(err); flash($("#eMsg"),"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
@@ -1061,11 +1062,11 @@ async function loadEvals(){
   try{
     const snap=await getDocs(query(collection(db,"evaluations"),where("sessionId","==",id)));
     const ev=snap.docs.map(d=>d.data());
-    $("#evalCount").textContent = ev.length ? `${ev.length} vlerësime anonime për trajnimin e zgjedhur` : "Ende nuk ka vlerësime për trajnimin e zgjedhur.";
+    $("#evalCount").textContent = ev.length ? `${ev.length} vlerësime anonime për takimin e zgjedhur` : "Ende nuk ka vlerësime për takimin e zgjedhur.";
     const bars=EVAL_Q.map(([k,t])=>{ const c=EVAL_OPT.map(o=>ev.filter(x=>x[k]===o).length);
       return `<h3>${t}</h3>`+EVAL_OPT.map((o,i)=>`<div style="display:flex;justify-content:space-between;font-size:.88rem"><span>${o}</span><b>${c[i]}</b></div><div class="bar"><i style="width:${ev.length?c[i]*100/ev.length:0}%"></i></div>`).join(""); }).join("");
     const txt=(k,title)=>{ const l=ev.map(x=>x[k]).filter(Boolean); return l.length?`<h3>${title}</h3>`+l.map(x=>`<div class="msg info" style="margin-top:8px">${esc(x)}</div>`).join(""):""; };
-    $("#evalBox").innerHTML = ev.length ? bars+txt("improve","Çfarë duhet përmirësuar")+txt("topics","Sugjerime për tematika") : "";
+    $("#evalBox").innerHTML = ev.length ? bars+txt("learned","Çfarë do të zbatojnë në klasë")+txt("improve","Çfarë do ta bënte takimin më të dobishëm")+txt("topics","Propozime për takimin e ardhshëm") : "";
   }catch(err){ console.error(err); $("#evalBox").innerHTML=`<div class="msg err">Nuk u ngarkuan vlerësimet (kontrollo Rules te Firestore, shih README).</div>`; }
 }
 
@@ -1121,7 +1122,7 @@ $("#svForm").addEventListener("submit", async e => {
       ratings,topics:f.getAll("topic"),topicOther:g("topicOther"),
       format:g("format"),time:g("time"),timeOther:g("timeOther"),present:g("present"),presentTopic:g("presentTopic"),
       platform:g("platform"),platformOther:g("platformOther"),
-      challenge:g("challenge"),goodPractice:g("goodPractice"),support:g("support"),suggestions:g("suggestions"),
+      challenge:g("challenge"),goodPractice:g("goodPractice"),suggestions:g("suggestions"),
       createdAt:serverTimestamp(),createdMs:Date.now()
     });
     try{ localStorage.setItem("needs_done","1"); }catch{}
@@ -1185,11 +1186,11 @@ async function loadNeedsAdmin(){
   $("#nBox").innerHTML = compTable + topics + (others.length?`<p class="note">Tema të tjera të sugjeruara: ${others.map(esc).join("; ")}</p>`:"")
     + tally("format","Forma e preferuar e takimeve") + tally("time","Koha e përshtatshme") + tally("present","Gatishmëria për të prezantuar")
     + tally("platform","Platforma e komunikimit") + tally("tech","Kushtet teknike në shkollë") + tally("school","Lloji i shkollës")
-    + txt("challenge","Sfidat kryesore") + txt("goodPractice","Praktika të suksesshme për t'u ndarë") + txt("support","Mbështetja e pritur") + txt("suggestions","Sugjerime të tjera");
+    + txt("challenge","Sfidat kryesore") + txt("goodPractice","Praktika të suksesshme për t'u ndarë") + txt("suggestions","Sugjerime të tjera");
 }
 $("#nXlsx").onclick = () => {
-  const head = ["Nr","Data","Niveli","Vitet e punës","Kategoria","Lloji i shkollës","Kushtet teknike","Emri",...SV_COMP.map(c=>c[1]),"Temat prioritare","Tjetër (temë)","Forma","Koha","Koha (tjetër)","Prezantim","Tema për prezantim","Platforma","Platforma (tjetër)","Sfida kryesore","Praktika të mira","Mbështetja e pritur","Sugjerime"];
-  const rows=[head].concat(needsRows.map((r,i)=>[i+1,r.createdMs?new Date(r.createdMs).toLocaleDateString("sq-AL"):"",r.level,r.years,r.category,r.school,r.tech,r.name||"",...SV_COMP.map(([k])=>r.ratings?.[k]??""),(r.topics||[]).join("; "),r.topicOther||"",r.format,r.time,r.timeOther||"",r.present,r.presentTopic||"",r.platform,r.platformOther||"",r.challenge||"",r.goodPractice||"",r.support||"",r.suggestions||""]));
+  const head = ["Nr","Data","Niveli","Vitet e punës","Kategoria","Lloji i shkollës","Kushtet teknike","Emri",...SV_COMP.map(c=>c[1]),"Temat prioritare","Tjetër (temë)","Forma","Koha","Koha (tjetër)","Prezantim","Tema për prezantim","Platforma","Platforma (tjetër)","Sfida kryesore","Praktika të mira","Sugjerime"];
+  const rows=[head].concat(needsRows.map((r,i)=>[i+1,r.createdMs?new Date(r.createdMs).toLocaleDateString("sq-AL"):"",r.level,r.years,r.category,r.school,r.tech,r.name||"",...SV_COMP.map(([k])=>r.ratings?.[k]??""),(r.topics||[]).join("; "),r.topicOther||"",r.format,r.time,r.timeOther||"",r.present,r.presentTopic||"",r.platform,r.platformOther||"",r.challenge||"",r.goodPractice||"",r.suggestions||""]));
   downloadTable(rows,"pyetesori-nevojave-2026-2027","Pyetësori");
 };
 $("#nWipe").onclick = async () => {
