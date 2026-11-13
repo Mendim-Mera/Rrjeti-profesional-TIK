@@ -347,7 +347,6 @@
           <span>Konfirmoj se isha prezent në këtë trajnim. Pranoj që emri, kontakti dhe firma ime të ruhen nga drejtuesi i rrjetit vetëm për evidencën e prezencës dhe vlerësimin me kredite, sipas Ligjit nr. 124/2024 "Për mbrojtjen e të dhënave personale".</span>
         </label>
         <button class="btn block" id="fSubmit" type="submit">Dërgo prezencën</button>
-        <button class="btn sec block hidden" id="fBack" type="button" style="margin-top:10px">← Kthehu pa plotësuar</button>
         <div id="fMsg"></div>
         <p class="note">🔒 Të dhënat shihen vetëm nga drejtuesi i rrjetit dhe ruhen vetëm për periudhën e nevojshme të vlerësimit me kredite dhe arkivimit.</p>
       </form>
@@ -652,7 +651,21 @@ function sessState(s, now = new Date()){
   return "open";
 }
 /* Trajnimet për të cilat kjo pajisje e ka dërguar tashmë prezencën fshihen nga formulari */
-const reopened = new Set();   /* trajnimet e rihapura me "Plotëso përsëri" (për butonin "Kthehu") */
+const deletedNotice = new Set();   /* trajnimet ku drejtuesi ka fshirë prezencën e kësaj pajisjeje */
+/* Kontrollon te databaza nëse prezenca e dërguar nga kjo pajisje ekziston ende (përmes shënuesit publik "attmark", jo të dhënave personale) */
+async function verifyAttDone(){
+  if(!configured || !db) return;
+  let changed = false;
+  for(const s of rawOpen){
+    let v = null; try{ v = localStorage.getItem(attDoneKey(s.id)); }catch{}
+    if(!v || v==="1") continue;               /* "1" = dërguar para kësaj veçorie: s'mund të verifikohet */
+    try{
+      const snap = await getDoc(doc(db,"attmark",v));
+      if(!snap.exists()){ try{ localStorage.removeItem(attDoneKey(s.id)); }catch{} deletedNotice.add(s.id); changed = true; }
+    }catch(err){ console.warn("attmark:", err && err.code); }   /* pa leje leximi: mbetet si e plotësuar */
+  }
+  if(changed) renderOpenSessions();
+}
 const attDoneKey = id => "attdone_"+id;
 const isAttDone = id => { try{ return !!localStorage.getItem(attDoneKey(id)); }catch{ return false; } };
 function renderOpenSessions(){
@@ -676,7 +689,7 @@ function renderOpenSessions(){
       const hrs = nextUp.openFrom && nextUp.openTo ? ' nga ora <b>'+esc(nextUp.openFrom)+'</b> deri në <b>'+esc(nextUp.openTo)+'</b>' : '';
       html = '<span class="ico">⏳</span><b>Regjistrimi i prezencës nuk është hapur ende.</b><br>Trajnimi i radhës: "'+esc(nextUp.title)+'"<br>📅 <b>'+fmtDate(nextUp.date)+'</b> ('+when+')'+hrs+'.<br><small>Formulari hapet automatikisht në atë kohë; mund ta lini faqen hapur.</small>';
     }
-    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'<br><button class="btn sec sm" type="button" data-redo="'+esc(doneNow[0].id)+'" style="margin-top:12px">Plotëso përsëri (ose për një koleg nga ky telefon)</button>';
+    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'.';
     else if(closed.length && !nextUp){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
     $("#noSession").innerHTML = html;
   }
@@ -686,7 +699,12 @@ function renderOpenSessions(){
   if(!up){ up = document.createElement("div"); up.id = "upcoming"; $("#noSession").parentNode.insertBefore(up, $("#noSession").nextSibling); }
   up.innerHTML = upcoming.length ? '<h3 style="margin:18px 0 8px;font-size:1rem">📅 Trajnimet e ardhshme</h3>' + upcoming.map(s =>
     '<div class="mat"><div class="ico">📅</div><div class="tx"><strong>'+esc(s.title)+'</strong><small>'+fmtDate(s.date)+(s.venue?" · "+esc(s.venue):"")+(s.openFrom&&s.openTo?" · regjistrimi "+esc(s.openFrom)+"–"+esc(s.openTo):"")+'</small></div></div>').join("") : "";
-  $("#fBack").classList.toggle("hidden", !openSessions.some(s => reopened.has(s.id)));
+  /* Njoftimi "prezenca u fshi" shfaqet mbi formular vetëm për trajnimet e hapura që kjo pajisje i kishte plotësuar */
+  let dn = $("#delNotice");
+  if(!dn){ dn = document.createElement("div"); dn.id = "delNotice"; dn.className = "msg err"; dn.style.marginBottom = "14px"; $("#attForm").parentNode.insertBefore(dn, $("#attForm")); }
+  const wasDeleted = openSessions.filter(s => deletedNotice.has(s.id));
+  dn.innerHTML = wasDeleted.length ? '⚠️ <b>Prezenca jote u fshi.</b> Plotësoje përsëri për "'+wasDeleted.map(s=>esc(s.title)).join('", "')+'".' : "";
+  dn.classList.toggle("hidden", !wasDeleted.length);
   const keep = $("#fSession").value;
   $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}${s.openFrom&&s.openTo?" ("+esc(s.openFrom)+"–"+esc(s.openTo)+")":""}</option>`).join("");
   if(keep && openSessions.some(s=>s.id===keep)) $("#fSession").value = keep;
@@ -722,17 +740,6 @@ async function loadOpenSessions(){
   renderOpenSessions();
   renderEval();
 }
-$("#noSession").addEventListener("click", e => {
-  const b = e.target.closest("button[data-redo]"); if(!b) return;
-  try{ localStorage.removeItem(attDoneKey(b.dataset.redo)); }catch{}
-  reopened.add(b.dataset.redo);
-  renderOpenSessions();
-});
-$("#fBack").addEventListener("click", () => {
-  reopened.forEach(id => { try{ localStorage.setItem(attDoneKey(id),"1"); }catch{} });
-  reopened.clear(); $("#attForm").reset(); clearSig(); $("#fMsg").innerHTML="";
-  renderOpenSessions();
-});
 /* Rivlerëso hapjen/mbylljen çdo 20 sekonda, pa rifreskuar faqen */
 setInterval(() => { if(rawOpen.length) renderOpenSessions(); }, 20000);
 /* ID unike: trajnimi + emri e mbiemri të normalizuar (pa shkronja të mëdha, pa ë/ç, pa hapësira të tepërta) */
@@ -759,8 +766,10 @@ $("#attForm").addEventListener("submit", async e => {
       signature:sigData(), createdAt:serverTimestamp()
     });
     localStorage.setItem(key,"1");
-    try{ localStorage.setItem(attDoneKey(s.id),"1"); }catch{}
-    reopened.clear();
+    let doneVal = "1";
+    try{ await setDoc(doc(db,"attmark",attId),{sessionId:s.id}); doneVal = attId; }catch(e2){ console.warn("attmark nuk u shkrua:", e2 && e2.code); }
+    deletedNotice.delete(s.id);
+    try{ localStorage.setItem(attDoneKey(s.id),doneVal); }catch{}
     $("#attForm").reset(); clearSig();
     flash(msg,"✓ Faleminderit! Prezenca u regjistrua me sukses.","ok");
     showEval(s.id);
@@ -920,7 +929,7 @@ async function loadAttendance(){
 $("#attSession").addEventListener("change", loadAttendance);
 $("#attBody").addEventListener("click", async e => {
   const t=e.target.closest("[data-delatt]"); if(!t) return;
-  if(confirm("Të fshihet kjo prezencë?")){ await deleteDoc(doc(db,"attendance",t.dataset.delatt)); loadAttendance(); }
+  if(confirm("Të fshihet kjo prezencë?")){ await deleteDoc(doc(db,"attendance",t.dataset.delatt)); try{ await deleteDoc(doc(db,"attmark",t.dataset.delatt)); }catch(e){ console.warn("attmark:", e && e.code); } loadAttendance(); }
 });
 $("#attBody").addEventListener("change", async e => {
   const t=e.target.closest("[data-ref]"); if(!t) return;
@@ -952,7 +961,7 @@ $("#attXlsx").onclick = () => {
   const rows=[["Nr","Emri","Mbiemri","Institucioni arsimor","Cikli","E-mail","Cel","Orë referim","Koha"]].concat(currentAtt.map((a,i)=>[i+1,a.first||a.name,a.last||"",a.institution||a.city||"",a.cycle||"",a.email,a.phone||"",a.refHours||0,a.createdAt?new Date(a.createdAt.seconds*1000).toLocaleString("sq-AL"):""]));
   downloadTable(rows,"prezenca-"+(s?.date||"trajnim"),"Prezenca");
 };
-async function deleteAttDocs(ids){ for(const id of ids) await deleteDoc(doc(db,"attendance",id)); }
+async function deleteAttDocs(ids){ for(const id of ids){ await deleteDoc(doc(db,"attendance",id)); try{ await deleteDoc(doc(db,"attmark",id)); }catch(e){ console.warn("attmark:", e && e.code); } } }
 $("#attWipe").onclick = async () => {
   if(!currentAtt.length) return alert("Nuk ka prezenca për t'u fshirë.");
   if(!confirm(`Do të fshihen përgjithmonë ${currentAtt.length} prezenca (emra, kontakte, firma) të këtij trajnimi. Ke shkarkuar listën? Vazhdo?`)) return;
@@ -1318,7 +1327,9 @@ async function sendPush(title, body){
 }
 
 /* ---------- Start ---------- */
-loadOpenSessions();
+loadOpenSessions().then(verifyAttDone);
+setInterval(verifyAttDone, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) verifyAttDone(); });
 if(configured) fetchMaterials().catch(console.error);   // për shenjën "e re" në menu që në hapje
 /* Rifreskim i qetë çdo 2 minuta (dhe kur faqja rikthehet në plan të parë) */
 async function refreshNew(){
