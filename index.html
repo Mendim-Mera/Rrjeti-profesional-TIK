@@ -1245,8 +1245,51 @@ const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("/Rrjeti-profesional-TIK/sw.js").then(r => swReg = r).catch(err => console.error("SW:", err));
+  navigator.serviceWorker.register("/Rrjeti-profesional-TIK/sw.js").then(r => { swReg = r; r.update().catch(()=>{}); }).catch(err => console.error("SW:", err));
 }
+
+/* ---------- Rifreskim automatik kur dalin ndryshime ---------- */
+/* Krahason index.html në server me atë që është hapur; nëse ndryshon, rifreskon faqen (në çdo pajisje, edhe pa e mbyllur aplikacionin). */
+(() => {
+  const URL_ = "/Rrjeti-profesional-TIK/";
+  let baseline = null, checking = false, edited = false, pending = false;
+  const sig = async () => {
+    const r = await fetch(URL_ + "?_v=" + Date.now(), { cache: "no-store" });
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const t = await r.text();
+    let h = 5381; for(let i=0;i<t.length;i++) h = ((h<<5) + h + t.charCodeAt(i)) | 0;
+    return t.length + ":" + h;
+  };
+  document.addEventListener("input", () => { edited = true; }, true);
+  const bar = () => {
+    if(document.getElementById("updBar")) return;
+    const d = document.createElement("div");
+    d.id = "updBar";
+    d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:#1e3a8a;color:#fff;padding:12px 14px;border-radius:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;box-shadow:0 6px 20px rgba(0,0,0,.3);font:600 14px system-ui,sans-serif";
+    d.innerHTML = '<span>Version i ri i gatshëm.</span><button type="button" style="background:#fff;color:#1e3a8a;border:0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">Rifresko</button>';
+    d.querySelector("button").onclick = () => location.reload();
+    document.body.appendChild(d);
+  };
+  const apply = () => {
+    if(!edited) { location.reload(); return; }   /* mos humb të dhënat e një formulari të nisur */
+    pending = true; bar();
+  };
+  const check = async () => {
+    if(checking || pending || !navigator.onLine) return;
+    checking = true;
+    try{
+      const s = await sig();
+      if(baseline === null) baseline = s;
+      else if(s !== baseline){ if(swReg) swReg.update().catch(()=>{}); apply(); }
+    }catch(e){ /* pa rrjet: provo herën tjetër */ }
+    finally{ checking = false; }
+  };
+  check();
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) check(); });
+  window.addEventListener("focus", check);
+  window.addEventListener("online", check);
+  setInterval(check, 2*60*1000);
+})();
 
 if(!isStandalone){
   if(isIOS){
