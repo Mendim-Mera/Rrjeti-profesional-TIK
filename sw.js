@@ -3,7 +3,7 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
 const BASE = "/Rrjeti-profesional-TIK";
-const CACHE = "rptik-v1";
+const CACHE = "rptik-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => {
@@ -15,6 +15,6 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request).catch(() => caches.match(`${BASE}/`)));
+    event.respondWith(fetch(event.request, { cache: "no-cache" }).catch(() => caches.match(`${BASE}/`)));
   }
 });
