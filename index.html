@@ -297,6 +297,7 @@
       <p class="sub">Të gjitha fushat janë të detyrueshme.</p>
       <div id="noSession" class="empty hidden"><span class="ico">📭</span>Aktualisht nuk ka asnjë trajnim të hapur për regjistrim prezence.</div>
       <form id="attForm" class="hidden" autocomplete="on">
+        <button class="btn sec sm hidden" id="fBack" type="button" style="margin-bottom:14px">← Kthehu pa plotësuar</button>
         <div class="fgroup">
           <div class="ftitle"><i>1</i>Trajnimi</div>
           <select id="fSession" required aria-label="Trajnimi"></select>
@@ -653,26 +654,31 @@ function sessState(s, now = new Date()){
 /* Trajnimet për të cilat kjo pajisje e ka dërguar tashmë prezencën fshihen nga formulari */
 const deletedNotice = new Set();   /* trajnimet ku drejtuesi ka fshirë prezencën e kësaj pajisjeje */
 /* Kontrollon te databaza nëse prezenca e dërguar nga kjo pajisje ekziston ende (përmes shënuesit publik "attmark", jo të dhënave personale) */
+/* Vlera e "attdone_<trajnimi>": "1" (dërguar para kësaj veçorie) ose listë JSON me ID-të e prezencave të dërguara nga kjo pajisje */
+const attDoneKey = id => "attdone_"+id;
+function attIds(id){ try{ const v=localStorage.getItem(attDoneKey(id)); if(!v) return null; if(v==="1") return []; const a=JSON.parse(v); return Array.isArray(a)?a:[]; }catch{ return null; } }
+const isAttDone = id => attIds(id) !== null;
+const reopened = new Set();   /* trajnimet e rihapura me "Plotëso për një koleg" */
 async function verifyAttDone(){
   if(!configured || !db) return;
   let changed = false;
   for(const s of rawOpen){
-    let v = null; try{ v = localStorage.getItem(attDoneKey(s.id)); }catch{}
-    if(!v || v==="1") continue;               /* "1" = dërguar para kësaj veçorie: s'mund të verifikohet */
-    try{
-      const snap = await getDoc(doc(db,"attmark",v));
-      if(!snap.exists()){ try{ localStorage.removeItem(attDoneKey(s.id)); }catch{} deletedNotice.add(s.id); changed = true; }
-    }catch(err){ console.warn("attmark:", err && err.code); }   /* pa leje leximi: mbetet si e plotësuar */
+    const ids = attIds(s.id);
+    if(!ids || !ids.length) continue;            /* "1" = dërguar para kësaj veçorie: s'mund të verifikohet */
+    let gone = false;
+    for(const v of ids){
+      try{ const snap = await getDoc(doc(db,"attmark",v)); if(!snap.exists()) gone = true; }
+      catch(err){ console.warn("attmark:", err && err.code); }   /* pa leje leximi: mbetet si e plotësuar */
+    }
+    if(gone){ try{ localStorage.removeItem(attDoneKey(s.id)); }catch{} reopened.delete(s.id); deletedNotice.add(s.id); changed = true; }
   }
   if(changed) renderOpenSessions();
 }
-const attDoneKey = id => "attdone_"+id;
-const isAttDone = id => { try{ return !!localStorage.getItem(attDoneKey(id)); }catch{ return false; } };
 function renderOpenSessions(){
   const now = new Date();
   const openNow = rawOpen.filter(s => sessState(s, now) === "open");
-  openSessions = openNow.filter(s => !isAttDone(s.id));
-  const doneNow = openNow.filter(s => isAttDone(s.id));
+  openSessions = openNow.filter(s => !isAttDone(s.id) || reopened.has(s.id));
+  const doneNow = openNow.filter(s => isAttDone(s.id) && !reopened.has(s.id));
   const has = openSessions.length>0;
   $("#attForm").classList.toggle("hidden",!has);
   $("#noSession").classList.toggle("hidden",has);
@@ -689,7 +695,7 @@ function renderOpenSessions(){
       const hrs = nextUp.openFrom && nextUp.openTo ? ' nga ora <b>'+esc(nextUp.openFrom)+'</b> deri në <b>'+esc(nextUp.openTo)+'</b>' : '';
       html = '<span class="ico">⏳</span><b>Regjistrimi i prezencës nuk është hapur ende.</b><br>Trajnimi i radhës: "'+esc(nextUp.title)+'"<br>📅 <b>'+fmtDate(nextUp.date)+'</b> ('+when+')'+hrs+'.<br><small>Formulari hapet automatikisht në atë kohë; mund ta lini faqen hapur.</small>';
     }
-    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'.';
+    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'.<br><button class="btn sec sm" type="button" data-redo="'+esc(doneNow[0].id)+'" style="margin-top:12px">Plotëso për një koleg</button>';
     else if(closed.length && !nextUp){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
     $("#noSession").innerHTML = html;
   }
@@ -705,6 +711,7 @@ function renderOpenSessions(){
   const wasDeleted = openSessions.filter(s => deletedNotice.has(s.id));
   dn.innerHTML = wasDeleted.length ? '⚠️ <b>Prezenca jote u fshi.</b> Plotësoje përsëri për "'+wasDeleted.map(s=>esc(s.title)).join('", "')+'".' : "";
   dn.classList.toggle("hidden", !wasDeleted.length);
+  $("#fBack").classList.toggle("hidden", !openSessions.some(s => reopened.has(s.id)));
   const keep = $("#fSession").value;
   $("#fSession").innerHTML = openSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}${s.openFrom&&s.openTo?" ("+esc(s.openFrom)+"–"+esc(s.openTo)+")":""}</option>`).join("");
   if(keep && openSessions.some(s=>s.id===keep)) $("#fSession").value = keep;
@@ -740,6 +747,16 @@ async function loadOpenSessions(){
   renderOpenSessions();
   renderEval();
 }
+$("#noSession").addEventListener("click", e => {
+  const b = e.target.closest("button[data-redo]"); if(!b) return;
+  reopened.add(b.dataset.redo);
+  renderOpenSessions();
+  $("#attForm").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("#fBack").addEventListener("click", () => {
+  reopened.clear(); $("#attForm").reset(); clearSig(); $("#fMsg").innerHTML="";
+  renderOpenSessions();
+});
 /* Rivlerëso hapjen/mbylljen çdo 20 sekonda, pa rifreskuar faqen */
 setInterval(() => { if(rawOpen.length) renderOpenSessions(); }, 20000);
 /* ID unike: trajnimi + emri e mbiemri të normalizuar (pa shkronja të mëdha, pa ë/ç, pa hapësira të tepërta) */
@@ -766,10 +783,11 @@ $("#attForm").addEventListener("submit", async e => {
       signature:sigData(), createdAt:serverTimestamp()
     });
     localStorage.setItem(key,"1");
-    let doneVal = "1";
-    try{ await setDoc(doc(db,"attmark",attId),{sessionId:s.id}); doneVal = attId; }catch(e2){ console.warn("attmark nuk u shkrua:", e2 && e2.code); }
-    deletedNotice.delete(s.id);
-    try{ localStorage.setItem(attDoneKey(s.id),doneVal); }catch{}
+    let list = attIds(s.id) || [], markOk = false;
+    try{ await setDoc(doc(db,"attmark",attId),{sessionId:s.id}); markOk = true; }catch(e2){ console.warn("attmark nuk u shkrua:", e2 && e2.code); }
+    if(markOk && !list.includes(attId)) list = list.concat(attId);
+    deletedNotice.delete(s.id); reopened.delete(s.id);
+    try{ localStorage.setItem(attDoneKey(s.id), list.length ? JSON.stringify(list) : "1"); }catch{}
     $("#attForm").reset(); clearSig();
     flash(msg,"✓ Faleminderit! Prezenca u regjistrua me sukses.","ok");
     showEval(s.id);
