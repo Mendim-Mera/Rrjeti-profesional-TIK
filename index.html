@@ -650,9 +650,14 @@ function sessState(s, now = new Date()){
   if(hm >= s.openTo) return "after";
   return "open";
 }
+/* Trajnimet për të cilat kjo pajisje e ka dërguar tashmë prezencën fshihen nga formulari */
+const attDoneKey = id => "attdone_"+id;
+const isAttDone = id => { try{ return !!localStorage.getItem(attDoneKey(id)); }catch{ return false; } };
 function renderOpenSessions(){
   const now = new Date();
-  openSessions = rawOpen.filter(s => sessState(s, now) === "open");
+  const openNow = rawOpen.filter(s => sessState(s, now) === "open");
+  openSessions = openNow.filter(s => !isAttDone(s.id));
+  const doneNow = openNow.filter(s => isAttDone(s.id));
   const has = openSessions.length>0;
   $("#attForm").classList.toggle("hidden",!has);
   $("#noSession").classList.toggle("hidden",has);
@@ -669,7 +674,8 @@ function renderOpenSessions(){
       const hrs = nextUp.openFrom && nextUp.openTo ? ' nga ora <b>'+esc(nextUp.openFrom)+'</b> deri në <b>'+esc(nextUp.openTo)+'</b>' : '';
       html = '<span class="ico">⏳</span><b>Regjistrimi i prezencës nuk është hapur ende.</b><br>Trajnimi i radhës: "'+esc(nextUp.title)+'"<br>📅 <b>'+fmtDate(nextUp.date)+'</b> ('+when+')'+hrs+'.<br><small>Formulari hapet automatikisht në atë kohë; mund ta lini faqen hapur.</small>';
     }
-    else if(closed.length){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
+    if(doneNow.length) html = '<span class="ico">✅</span><b>Prezenca u regjistrua.</b> Faleminderit!<br>'+doneNow.map(s=>'"'+esc(s.title)+'" ('+fmtDate(s.date)+')').join(", ")+'<br><button class="btn sec sm" type="button" data-redo="'+esc(doneNow[0].id)+'" style="margin-top:12px">Regjistro një koleg tjetër nga ky telefon</button>';
+    else if(closed.length && !nextUp){ const c = closed.sort((x,y)=>y.date.localeCompare(x.date))[0]; html = '<span class="ico">🔒</span>Regjistrimi për "'+esc(c.title)+'" është mbyllur'+(c.openTo?' (ishte i hapur '+esc(c.openFrom)+'–'+esc(c.openTo)+')':'')+'.'; }
     $("#noSession").innerHTML = html;
   }
   /* Trajnimet e ardhshme (regjistrimi ende s'ka çelur): shfaqen gjithmonë te Prezenca */
@@ -713,6 +719,11 @@ async function loadOpenSessions(){
   renderOpenSessions();
   renderEval();
 }
+$("#noSession").addEventListener("click", e => {
+  const b = e.target.closest("button[data-redo]"); if(!b) return;
+  try{ localStorage.removeItem(attDoneKey(b.dataset.redo)); }catch{}
+  renderOpenSessions();
+});
 /* Rivlerëso hapjen/mbylljen çdo 20 sekonda, pa rifreskuar faqen */
 setInterval(() => { if(rawOpen.length) renderOpenSessions(); }, 20000);
 /* ID unike: trajnimi + emri e mbiemri të normalizuar (pa shkronja të mëdha, pa ë/ç, pa hapësira të tepërta) */
@@ -739,10 +750,12 @@ $("#attForm").addEventListener("submit", async e => {
       signature:sigData(), createdAt:serverTimestamp()
     });
     localStorage.setItem(key,"1");
+    try{ localStorage.setItem(attDoneKey(s.id),"1"); }catch{}
     $("#attForm").reset(); clearSig();
     flash(msg,"✓ Faleminderit! Prezenca u regjistrua me sukses.","ok");
     showEval(s.id);
-    msg.scrollIntoView({behavior:"smooth",block:"center"});
+    renderOpenSessions();
+    ($("#noSession").classList.contains("hidden") ? msg : $("#noSession")).scrollIntoView({behavior:"smooth",block:"center"});
   }catch(err){
     console.error(err);
     if(err && err.code==="permission-denied"){ localStorage.setItem(key,"1"); flash(msg,"Ky emër dhe mbiemër ka dërguar tashmë prezencën për këtë trajnim.","err"); }
