@@ -506,6 +506,10 @@
       <div class="card noprint">
         <h2>Vlerësimet e takimit</h2>
         <p class="sub" id="evalCount">Për takimin e zgjedhur te lista e prezencës më lart.</p>
+        <div class="actions">
+          <button class="btn sec sm hidden" id="evXlsx">⬇ Shkarko Excel</button>
+          <button class="btn danger sm hidden" id="evWipe">🗑 Fshi vlerësimet e takimit</button>
+        </div>
         <div id="evalBox"></div>
       </div>
 
@@ -1056,12 +1060,15 @@ $("#evalForm").addEventListener("submit", async e => {
     e.target.reset(); e.target.classList.add("hidden"); $("#evalThanks").classList.remove("hidden");
   }catch(err){ console.error(err); flash($("#eMsg"),"Gabim gjatë dërgimit. Provoni përsëri.","err"); }
 });
+let currentEvals=[];
+function evButtons(){ ["#evXlsx","#evWipe"].forEach(x=>$(x).classList.toggle("hidden",!currentEvals.length)); }
 async function loadEvals(){
   const id=$("#attSession").value;
-  if(!id){ $("#evalBox").innerHTML=""; return; }
+  currentEvals=[];
+  if(!id){ $("#evalBox").innerHTML=""; evButtons(); return; }
   try{
     const snap=await getDocs(query(collection(db,"evaluations"),where("sessionId","==",id)));
-    const ev=snap.docs.map(d=>d.data());
+    currentEvals=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)); const ev=currentEvals; evButtons();
     $("#evalCount").textContent = ev.length ? `${ev.length} vlerësime anonime për takimin e zgjedhur` : "Ende nuk ka vlerësime për takimin e zgjedhur.";
     const bars=EVAL_Q.map(([k,t])=>{ const c=EVAL_OPT.map(o=>ev.filter(x=>x[k]===o).length);
       return `<h3>${t}</h3>`+EVAL_OPT.map((o,i)=>`<div style="display:flex;justify-content:space-between;font-size:.88rem"><span>${o}</span><b>${c[i]}</b></div><div class="bar"><i style="width:${ev.length?c[i]*100/ev.length:0}%"></i></div>`).join(""); }).join("");
@@ -1069,6 +1076,18 @@ async function loadEvals(){
     $("#evalBox").innerHTML = ev.length ? bars+txt("learned","Çfarë do të zbatojnë në klasë")+txt("improve","Çfarë do ta bënte takimin më të dobishëm")+txt("topics","Propozime për takimin e ardhshëm") : "";
   }catch(err){ console.error(err); $("#evalBox").innerHTML=`<div class="msg err">Nuk u ngarkuan vlerësimet (kontrollo Rules te Firestore, shih README).</div>`; }
 }
+$("#evXlsx").onclick = () => {
+  const s=allSessions.find(x=>x.id===$("#attSession").value);
+  const head=["Nr","Koha",...EVAL_Q.map(q=>q[1]),"Çfarë do të zbatojnë në klasë","Çfarë do ta bënte takimin më të dobishëm","Propozime për takimin e ardhshëm"];
+  const rows=[head].concat(currentEvals.map((r,i)=>[i+1,r.createdAt?new Date(r.createdAt.seconds*1000).toLocaleString("sq-AL"):"",...EVAL_Q.map(([k])=>r[k]||""),r.learned||"",r.improve||"",r.topics||""]));
+  downloadTable(rows,"vleresimi-takimit-"+(s?.date||"takim"),"Vlerësimet");
+};
+$("#evWipe").onclick = async () => {
+  if(!currentEvals.length) return;
+  if(!confirm(`Do të fshihen përgjithmonë ${currentEvals.length} vlerësime të këtij takimi. Ke shkarkuar Excel-in? Vazhdo?`)) return;
+  try{ for(const r of currentEvals) await deleteDoc(doc(db,"evaluations",r.id)); await loadEvals(); }
+  catch(err){ console.error(err); alert("Gabim gjatë fshirjes"+(String(err.code).includes("permission")?" (kontrollo Rules te Firestore: admini duhet të lejohet të fshijë te koleksioni evaluations).":".")); }
+};
 
 /* ---------- Pyetësori i nevojave ---------- */
 const SV_COMP = [["planifikimi", "Planifikimi mësimor sipas kurrikulës së TIK-ut"], ["metodat", "Metoda aktive (mësimi me projekte, mësimi me problem, puna në grup)"], ["vleresimi", "Vlerësimi formues dhe përdorimi i rubrikave"], ["programimi", "Programimi dhe të menduarit llogaritës (Scratch, Python, micro:bit)"], ["mjetet", "Mjete digjitale për mësimdhënie (Google Workspace/Classroom, Canva, Kahoot etj.)"], ["siguria", "Siguria kibernetike dhe qytetaria digjitale"], ["ia", "Përdorimi i inteligjencës artificiale në mësimdhënie"], ["diferencimi", "Puna me nxënës me nevoja të veçanta dhe diferencimi i mësimdhënies"], ["projektet", "Projekte kurrikulare ndërlëndore"], ["klasa", "Menaxhimi i klasës dhe motivimi i nxënësve"]];
