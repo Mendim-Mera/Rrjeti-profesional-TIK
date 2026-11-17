@@ -302,7 +302,7 @@
     <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Prezenca</button>
   <button data-tab="materialet">
     <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Materialet<span class="nbadge hidden" id="matBadge">0</span></button>
-  <button data-tab="biseda">
+  <button data-tab="biseda" id="navChat" class="hidden">
     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Biseda<span class="livedot hidden" id="chatDot"></span></button>
   <button data-tab="pyetesori" id="navSurvey" class="hidden">
     <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Pyetësori</button>
@@ -640,7 +640,6 @@ const ONESIGNAL_APP_ID = "ddae06a8-d2ed-484d-9ba8-697f4f631dc4";
 const PUSH_WORKER_URL  = "https://rptik-push.mendim-mera.workers.dev/"; // Njoftimi automatik është çaktivizuar: njoftimet dërgohen me dorë nga paneli i OneSignal
 const PUSH_SHARED_SECRET = "fgyfkhhfbnnvnfnlflklfvblk";
 /* ===================================================== */
-
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const MONTHS = ["Janar","Shkurt","Mars","Prill","Maj","Qershor","Korrik","Gusht","Shtator","Tetor","Nëntor","Dhjetor"];
@@ -995,6 +994,10 @@ function updateChatBar(){
   const onTab = !$("#view-biseda").classList.contains("hidden");
   const fresh = chatOpenList.filter(s=>!chatDismissed.has(s.id));
   $("#chatDot").classList.toggle("hidden", !chatOpenList.length);
+  /* Menuja "Biseda" shfaqet vetëm kur ka bisedë të hapur (drejtuesi e sheh gjithmonë, për moderim) */
+  const showTab = chatOpenList.length>0 || isAdminUser;
+  $("#navChat").classList.toggle("hidden", !showTab);
+  if(!showTab && onTab) $('nav button[data-tab="prezenca"]').click();
   if(!fresh.length || onTab || isAdminUser){ $("#chatBar").classList.add("hidden"); return; }
   const s = fresh[0];
   $("#chatBarTxt").textContent = "💬 Biseda është e hapur: " + s.title + (s.date ? " – " + fmtDate(s.date) : "");
@@ -1037,6 +1040,7 @@ $("#chatBox").addEventListener("click", async e => {
 if(configured) onAuthStateChanged(auth, user => {
   const ok = user && user.email && user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
   isAdminUser = !!ok;
+  if(typeof updateChatBar==="function") updateChatBar();
   if(ok){ $("#newSesBar").classList.add("hidden"); updateMatBadge(); }
   $("#loginCard").classList.toggle("hidden", !!ok);
   $("#adminArea").classList.toggle("hidden", !ok);
