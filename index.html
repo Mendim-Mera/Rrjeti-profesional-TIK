@@ -224,6 +224,21 @@
   .note{font-size:.8rem;color:var(--muted);margin-top:12px;line-height:1.5}
   input.small{width:78px;padding:8px 10px;border-radius:10px}
   #printHead{display:none}
+  .pill.live{background:var(--ok-bg);color:var(--ok)}
+  .chatstate{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;font-weight:600;font-size:.9rem;margin-top:12px}
+  .chatstate.on{background:var(--ok-bg);color:var(--ok)}
+  .chatstate.off{background:#f1f3f8;color:var(--muted)}
+  .livedot{width:9px;height:9px;border-radius:50%;background:#12b76a;display:inline-block;animation:lp 1.4s infinite}
+  @keyframes lp{0%{box-shadow:0 0 0 0 rgba(18,183,106,.6)}100%{box-shadow:0 0 0 9px rgba(18,183,106,0)}}
+  nav button .livedot{position:absolute;top:6px;left:calc(50% + 8px)}
+  nav button .livedot.hidden{display:none}
+  .chatbox{display:flex;flex-direction:column;gap:8px;height:min(55vh,460px);overflow-y:auto;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:14px;margin:12px 0}
+  .cmsg{max-width:85%;padding:8px 12px;border-radius:14px;background:#fff;border:1px solid var(--line);align-self:flex-start;overflow-wrap:anywhere}
+  .cmsg.mine{align-self:flex-end;background:var(--brand-l);border-color:#d5defc}
+  .cmsg .cn{font-size:.74rem;font-weight:700;color:var(--brand-d);margin-bottom:2px;display:flex;gap:8px;align-items:center}
+  .cmsg .ct{font-weight:500;color:var(--muted)}
+  .cmsg .cx{margin-left:auto;border:0;background:none;color:var(--err);cursor:pointer;font-size:.8rem}
+  .cmsg p{margin:0;white-space:pre-wrap;font-size:.94rem}
   @page{size:A4 landscape;margin:12mm}
   @media print{
     .hero,nav,.noprint,.card:not(#attCard){display:none!important}
@@ -274,11 +289,21 @@
   </div>
 </div>
 
+<div id="chatBar" class="infobar alert hidden" role="status">
+  <span id="chatBarTxt">💬 Biseda është e hapur</span>
+  <div class="infobar-actions">
+    <button id="chatBarGo" class="btn sm">Hyr në bisedë</button>
+    <button id="chatBarClose" class="x" aria-label="Mbyll">✕</button>
+  </div>
+</div>
+
 <nav>
   <button class="active" data-tab="prezenca">
     <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Prezenca</button>
   <button data-tab="materialet">
     <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Materialet<span class="nbadge hidden" id="matBadge">0</span></button>
+  <button data-tab="biseda">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Biseda<span class="livedot hidden" id="chatDot"></span></button>
   <button data-tab="pyetesori" id="navSurvey" class="hidden">
     <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Pyetësori</button>
   <button data-tab="admin">
@@ -368,6 +393,29 @@
         <div id="eMsg"></div>
       </form>
       <div id="evalThanks" class="empty hidden"><span class="ico">🙏</span>Faleminderit për vlerësimin!</div>
+    </div>
+  </section>
+
+  <!-- BISEDA -->
+  <section id="view-biseda" class="hidden">
+    <div class="card">
+      <h2>Biseda e trajnimit</h2>
+      <p class="sub">Shkruani me kolegët para, gjatë ose pas trajnimit. Mesazhet shihen nga të gjithë anëtarët e rrjetit.</p>
+      <label for="chatSession">Trajnimi</label>
+      <select id="chatSession" aria-label="Trajnimi"></select>
+      <div id="chatState" class="chatstate off"></div>
+      <div id="chatBox" class="chatbox" aria-live="polite"><div class="empty">Zgjidhni një trajnim.</div></div>
+      <form id="chatForm" autocomplete="off">
+        <div class="row">
+          <div><label for="chatFirst">Emri</label><input id="chatFirst" required maxlength="40" autocomplete="given-name"></div>
+          <div><label for="chatLast">Mbiemri</label><input id="chatLast" required maxlength="40" autocomplete="family-name"></div>
+        </div>
+        <label for="chatText">Mesazhi</label>
+        <textarea id="chatText" rows="2" required maxlength="500" placeholder="Shkruani një mesazh…"></textarea>
+        <button class="btn block" type="submit" style="margin-top:10px">Dërgo</button>
+      </form>
+      <div id="chatMsg"></div>
+      <p class="sub" style="margin-top:12px">Emri dhe mesazhi ruhen te drejtuesi i rrjetit dhe mund të fshihen prej tij. Mos shkruani të dhëna personale (telefon, adresë).</p>
     </div>
   </section>
 
@@ -573,7 +621,7 @@
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,collection,addDoc,getDocs,getDoc,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,onSnapshot,orderBy,limit,collection,addDoc,getDocs,getDoc,query,where,deleteDoc,updateDoc,setDoc,doc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 /* ============ KONFIGURIMI ============ */
@@ -589,8 +637,8 @@ const firebaseConfig = {
 const ADMIN_EMAIL = "mendim.mera@gmail.com";
 /* Njoftimet push (OneSignal, falas, pa kartë) */
 const ONESIGNAL_APP_ID = "ddae06a8-d2ed-484d-9ba8-697f4f631dc4";
-const PUSH_WORKER_URL  = ""; // Njoftimi automatik është çaktivizuar: njoftimet dërgohen me dorë nga paneli i OneSignal
-const PUSH_SHARED_SECRET = "";
+const PUSH_WORKER_URL  = "https://rptik-push.mendim-mera.workers.dev/"; // Njoftimi automatik është çaktivizuar: njoftimet dërgohen me dorë nga paneli i OneSignal
+const PUSH_SHARED_SECRET = "fgyfkhhfbnnvnfnlflklfvblk";
 /* ===================================================== */
 
 const $ = s => document.querySelector(s);
@@ -608,10 +656,12 @@ if(configured){ fbApp = initializeApp(firebaseConfig); db = getFirestore(fbApp);
 /* ---------- Tabs ---------- */
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x===b));
-  ["prezenca","materialet","pyetesori","admin"].forEach(t => $("#view-"+t).classList.toggle("hidden", t!==b.dataset.tab));
+  ["prezenca","materialet","biseda","pyetesori","admin"].forEach(t => $("#view-"+t).classList.toggle("hidden", t!==b.dataset.tab));
   window.scrollTo({top:0,behavior:"smooth"});
   if(b.dataset.tab==="materialet") loadMaterials();
   if(b.dataset.tab==="pyetesori") loadSurveyState();
+  if(b.dataset.tab==="biseda") openChat(); else closeChat();
+  if(typeof updateChatBar==="function") updateChatBar();
 });
 
 /* ---------- Signature pad ---------- */
@@ -881,6 +931,108 @@ async function loadMaterials(){
 $("#matSearch").addEventListener("input", renderMaterials);
 $("#matFilters").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return; activeTopic=b.dataset.topic; renderMaterials(); });
 
+/* ---------- Biseda (chat) për çdo trajnim ---------- */
+let chatUnsub = null, chatSessions = [], chatMsgs = [], chatOpenIds = new Set(), chatOpenList = [];
+const chatDismissed = new Set();
+const LS_NAME = "chat_name";
+const chatTime = ts => { const d = ts && ts.toDate ? ts.toDate() : null; return d ? d.toLocaleString("sq-AL",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : ""; };
+function chatMe(){ try{ return JSON.parse(localStorage.getItem(LS_NAME)||"null")||{}; }catch{ return {}; } }
+function renderChat(){
+  const box = $("#chatBox");
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  const me = chatMe(), myKey = ((me.f||"")+" "+(me.l||"")).trim().toLowerCase();
+  box.innerHTML = chatMsgs.length ? chatMsgs.map(m => {
+    const mine = myKey && (m.name||"").toLowerCase()===myKey;
+    return `<div class="cmsg${mine?" mine":""}"><div class="cn">${esc(m.name)}<span class="ct">${chatTime(m.createdAt)}</span>${isAdminUser?`<button class="cx" data-del="${esc(m.id)}" title="Fshi">🗑</button>`:""}</div><p>${esc(m.text)}</p></div>`;
+  }).join("") : `<div class="empty"><span class="ico">💬</span>Ende s'ka mesazhe. Filloni bisedën!</div>`;
+  if(near) box.scrollTop = box.scrollHeight;
+}
+async function openChat(){
+  if(!configured) return;
+  const me = chatMe();
+  if(me.f && !$("#chatFirst").value) $("#chatFirst").value = me.f;
+  if(me.l && !$("#chatLast").value) $("#chatLast").value = me.l;
+  if(!chatSessions.length){
+    try{
+      const snap = await getDocs(collection(db,"sessions"));
+      chatSessions = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    }catch(err){ console.error(err); $("#chatBox").innerHTML='<div class="msg err">Nuk u ngarkuan trajnimet.</div>'; return; }
+    const today = new Date().toISOString().slice(0,10);
+    const pick = chatSessions.find(s=>chatOpenIds.has(s.id)) || chatSessions.find(s=>s.open) || chatSessions.filter(s=>(s.date||"")>=today).pop() || chatSessions[0];
+    fillChatSelect(pick && pick.id);
+  }
+  subscribeChat();
+}
+function fillChatSelect(selId){
+  const sel=$("#chatSession"), cur = selId || sel.value;
+  sel.innerHTML = chatSessions.map(s=>`<option value="${esc(s.id)}">${chatOpenIds.has(s.id)?"🟢 ":""}${esc(s.title)} – ${fmtDate(s.date)}</option>`).join("");
+  if(cur) sel.value = cur;
+  updateChatComposer();
+}
+function updateChatComposer(){
+  const id=$("#chatSession").value, on = chatOpenIds.has(id);
+  const st=$("#chatState");
+  st.className="chatstate "+(on?"on":"off");
+  st.innerHTML = on ? '<span class="livedot"></span>Biseda është e hapur – mund të shkruani.' : '🔒 Biseda është e mbyllur për këtë trajnim (mund t\'i lexoni mesazhet).';
+  $("#chatForm").classList.toggle("hidden", !on);
+}
+function subscribeChat(){
+  if(chatUnsub){ chatUnsub(); chatUnsub=null; }
+  const id = $("#chatSession").value; chatMsgs = [];
+  if(!id){ $("#chatBox").innerHTML='<div class="empty">Nuk ka trajnime.</div>'; return; }
+  const q = query(collection(db,"sessions",id,"messages"), orderBy("createdAt","asc"), limit(300));
+  chatUnsub = onSnapshot(q, snap => {
+    chatMsgs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const b=$("#chatBox"), first = b.dataset.s!==id; b.dataset.s=id;
+    renderChat(); if(first) b.scrollTop=b.scrollHeight;
+  }, err => { console.error(err); $("#chatBox").innerHTML='<div class="msg err">Biseda nuk u ngarkua (kontrollo Rules te Firestore për "messages", shih CHAT-RULES.md).</div>'; });
+}
+function closeChat(){ if(chatUnsub){ chatUnsub(); chatUnsub=null; } }
+$("#chatSession").addEventListener("change", () => { $("#chatBox").dataset.s=""; updateChatComposer(); subscribeChat(); });
+
+/* Njoftimi live "Biseda është e hapur": ndjek trajnimet me chatOpen=true, pa rifreskuar faqen */
+function updateChatBar(){
+  const onTab = !$("#view-biseda").classList.contains("hidden");
+  const fresh = chatOpenList.filter(s=>!chatDismissed.has(s.id));
+  $("#chatDot").classList.toggle("hidden", !chatOpenList.length);
+  if(!fresh.length || onTab || isAdminUser){ $("#chatBar").classList.add("hidden"); return; }
+  const s = fresh[0];
+  $("#chatBarTxt").textContent = "💬 Biseda është e hapur: " + s.title + (s.date ? " – " + fmtDate(s.date) : "");
+  $("#chatBar").dataset.sid = s.id;
+  $("#chatBar").classList.remove("hidden");
+}
+if(configured) onSnapshot(query(collection(db,"sessions"),where("chatOpen","==",true)), snap => {
+  chatOpenList = snap.docs.map(d=>({id:d.id,...d.data()}));
+  chatOpenIds = new Set(chatOpenList.map(s=>s.id));
+  if(chatSessions.length) fillChatSelect();
+  updateChatBar();
+}, err => console.error("chatOpen:", err));
+$("#chatBarGo").addEventListener("click", async () => {
+  const sid = $("#chatBar").dataset.sid;
+  $('nav button[data-tab="biseda"]').click();
+  await openChat();
+  if(sid && [...$("#chatSession").options].some(o=>o.value===sid)){ $("#chatSession").value=sid; updateChatComposer(); $("#chatBox").dataset.s=""; subscribeChat(); }
+});
+$("#chatBarClose").addEventListener("click", () => { chatDismissed.add($("#chatBar").dataset.sid); updateChatBar(); });
+$("#chatForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const f=$("#chatFirst").value.trim().replace(/\s+/g," "), l=$("#chatLast").value.trim().replace(/\s+/g," "), text=$("#chatText").value.trim(), sid=$("#chatSession").value;
+  if(!f||!l||!text||!sid) return;
+  try{ localStorage.setItem(LS_NAME, JSON.stringify({f,l})); }catch{}
+  const btn=e.submitter; if(btn) btn.disabled=true;
+  try{
+    await addDoc(collection(db,"sessions",sid,"messages"),{name:f+" "+l,text,createdAt:serverTimestamp()});
+    $("#chatText").value=""; $("#chatMsg").innerHTML="";
+    const nowMs=Date.now(); if(nowMs-(window.__lastChatPush||0) > 60000){ window.__lastChatPush=nowMs; const st=chatSessions.find(x=>x.id===sid); sendPush("💬 "+f+" "+l+(st?" · "+st.title:""), text.length>110?text.slice(0,107)+"…":text); }
+  }catch(err){ console.error(err); flash($("#chatMsg"),"Mesazhi nuk u dërgua"+(err.code==="permission-denied"?" (rregullat e Firestore nuk e lejojnë; shih CHAT-RULES.md).":"."),"err"); }
+  if(btn) btn.disabled=false;
+});
+$("#chatText").addEventListener("keydown", e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); $("#chatForm").requestSubmit(); } });
+$("#chatBox").addEventListener("click", async e => {
+  const b=e.target.closest("button[data-del]"); if(!b || !isAdminUser) return;
+  if(confirm("Të fshihet ky mesazh?")) try{ await deleteDoc(doc(db,"sessions",$("#chatSession").value,"messages",b.dataset.del)); }catch(err){ alert("Gabim gjatë fshirjes."); }
+});
+
 /* ---------- Admin ---------- */
 if(configured) onAuthStateChanged(auth, user => {
   const ok = user && user.email && user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
@@ -906,8 +1058,8 @@ async function loadSessionsAdmin(){
   const snap = await getDocs(collection(db,"sessions"));
   allSessions = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.date.localeCompare(a.date));
   $("#sesList").innerHTML = allSessions.length ? allSessions.map(s=>`
-    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span>${s.evalOpen?'<span class="pill">vlerësim aktiv</span>':""}</strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë${s.openFrom&&s.openTo?" · regjistrim "+esc(s.openFrom)+"–"+esc(s.openTo):""}</small></div>
-    <div class="acts"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn sec sm" data-toggleeval="${s.id}">${s.evalOpen?"Mbyll vlerësimin":"Hap vlerësimin"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
+    <div class="mat"><div class="ico">📅</div><div class="tx"><strong>${esc(s.title)}<span class="pill ${s.open?"":"closed"}">${s.open?"i hapur":"i mbyllur"}</span>${s.evalOpen?'<span class="pill">vlerësim aktiv</span>':""}${s.chatOpen?'<span class="pill live">💬 biseda e hapur</span>':""}</strong><small>${fmtDate(s.date)}${s.venue?" · "+esc(s.venue):""} · ${s.hours||2} orë${s.openFrom&&s.openTo?" · regjistrim "+esc(s.openFrom)+"–"+esc(s.openTo):""}</small></div>
+    <div class="acts"><button class="btn sec sm" data-toggle="${s.id}">${s.open?"Mbyll":"Hap"}</button><button class="btn sec sm" data-togglechat="${s.id}">${s.chatOpen?"Mbyll bisedën":"Hap bisedën"}</button><button class="btn sec sm" data-toggleeval="${s.id}">${s.evalOpen?"Mbyll vlerësimin":"Hap vlerësimin"}</button><button class="btn danger sm" data-delses="${s.id}">Fshij</button></div></div>`).join("")
     : `<div class="empty"><span class="ico">🗓</span>Ende nuk keni krijuar trajnime.</div>`;
   const prev = $("#attSession").value;
   $("#attSession").innerHTML = allSessions.map(s=>`<option value="${s.id}">${fmtDate(s.date)} – ${esc(s.title)}</option>`).join("");
@@ -933,6 +1085,7 @@ $("#sesForm").addEventListener("submit", async e => {
 $("#sesList").addEventListener("click", async e => {
   const t=e.target.closest("button"); if(!t) return;
   if(t.dataset.toggle){ const s=allSessions.find(x=>x.id===t.dataset.toggle); await updateDoc(doc(db,"sessions",s.id),{open:!s.open}); loadSessionsAdmin(); }
+  if(t.dataset.togglechat){ const s=allSessions.find(x=>x.id===t.dataset.togglechat); const nv=!s.chatOpen; await updateDoc(doc(db,"sessions",s.id),{chatOpen:nv}); if(nv) sendPush("💬 Biseda u hap", (s.title||"Trajnimi")+" – hyni në faqe dhe shkruani me kolegët"); loadSessionsAdmin(); }
   if(t.dataset.toggleeval){ const s=allSessions.find(x=>x.id===t.dataset.toggleeval); await updateDoc(doc(db,"sessions",s.id),{evalOpen:!s.evalOpen}); loadSessionsAdmin(); }
   if(t.dataset.delses && confirm("Të fshihet trajnimi? Prezencat e tij NUK fshihen automatikisht; përdor butonin \"Fshi prezencat e trajnimit\" te lista e prezencës.")){ await deleteDoc(doc(db,"sessions",t.dataset.delses)); loadSessionsAdmin(); }
 });
