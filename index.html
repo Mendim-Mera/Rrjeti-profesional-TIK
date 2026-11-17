@@ -640,6 +640,7 @@ const ONESIGNAL_APP_ID = "ddae06a8-d2ed-484d-9ba8-697f4f631dc4";
 const PUSH_WORKER_URL  = "https://rptik-push.mendim-mera.workers.dev/"; // Njoftimi automatik është çaktivizuar: njoftimet dërgohen me dorë nga paneli i OneSignal
 const PUSH_SHARED_SECRET = "fgyfkhhfbnnvnfnlflklfvblk";
 /* ===================================================== */
+
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const MONTHS = ["Janar","Shkurt","Mars","Prill","Maj","Qershor","Korrik","Gusht","Shtator","Tetor","Nëntor","Dhjetor"];
@@ -1556,11 +1557,13 @@ $("#notifBtn")?.addEventListener("click", async () => {
 async function sendPush(title, body){
   if(!PUSH_WORKER_URL || PUSH_WORKER_URL.startsWith("ZËVENDËSO")) return;
   try{
-    await fetch(PUSH_WORKER_URL, {
+    const r = await fetch(PUSH_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Shared-Secret": PUSH_SHARED_SECRET },
       body: JSON.stringify({ title, body }),
     });
+    const t = await r.text();
+    if(!r.ok) console.error("Push: gabim", r.status, t); else console.log("Push OK:", t);
   }catch(err){ console.error("Dërgimi i njoftimit dështoi:", err); }
 }
 
