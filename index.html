@@ -637,8 +637,6 @@ const firebaseConfig = {
 const ADMIN_EMAIL = "mendim.mera@gmail.com";
 /* Njoftimet push (OneSignal, falas, pa kartë) */
 const ONESIGNAL_APP_ID = "ddae06a8-d2ed-484d-9ba8-697f4f631dc4";
-const PUSH_WORKER_URL  = "https://rptik-push.mendim-mera.workers.dev/"; // Njoftimi automatik është çaktivizuar: njoftimet dërgohen me dorë nga paneli i OneSignal
-const PUSH_SHARED_SECRET = "fgyfkhhfbnnvnfnlflklfvblk";
 /* ===================================================== */
 
 const $ = s => document.querySelector(s);
@@ -1027,7 +1025,7 @@ $("#chatForm").addEventListener("submit", async e => {
   try{
     await addDoc(collection(db,"sessions",sid,"messages"),{name:f+" "+l,text,createdAt:serverTimestamp()});
     $("#chatText").value=""; $("#chatMsg").innerHTML="";
-    const nowMs=Date.now(); if(nowMs-(window.__lastChatPush||0) > 60000){ window.__lastChatPush=nowMs; const st=chatSessions.find(x=>x.id===sid); sendPush("💬 "+f+" "+l+(st?" · "+st.title:""), text.length>110?text.slice(0,107)+"…":text); }
+    
   }catch(err){ console.error(err); flash($("#chatMsg"),"Mesazhi nuk u dërgua"+(err.code==="permission-denied"?" (rregullat e Firestore nuk e lejojnë; shih CHAT-RULES.md).":"."),"err"); }
   if(btn) btn.disabled=false;
 });
@@ -1081,7 +1079,6 @@ $("#sesForm").addEventListener("submit", async e => {
     if(fromV && toV && toV <= fromV) return flash($("#sesMsg"),"Ora e mbylljes duhet të jetë pas orës së hapjes.","err");
     await addDoc(collection(db,"sessions"),{date:sDateVal,title:sTitleVal,venue:$("#sVenue").value.trim(),hours:Number($("#sHours").value)||2,open:true,openFrom:$("#sFrom").value||"",openTo:$("#sTo").value||"",createdAt:serverTimestamp()});
     $("#sTitle").value=""; $("#sFrom").value=""; $("#sTo").value=""; $("#sesMsg").innerHTML=""; await loadSessionsAdmin();
-    sendPush("📅 Trajnim i ri", sTitleVal + (sDateVal ? " – " + fmtDate(sDateVal) : ""));
   }catch(err){
     console.error(err);
     flash($("#sesMsg"),"Gabim: "+(err.code||"")+" – "+(err.message||err)+(String(err.code).includes("permission")?" → Kontrollo Rules në Firestore dhe ADMIN_EMAIL.":""),"err");
@@ -1090,7 +1087,7 @@ $("#sesForm").addEventListener("submit", async e => {
 $("#sesList").addEventListener("click", async e => {
   const t=e.target.closest("button"); if(!t) return;
   if(t.dataset.toggle){ const s=allSessions.find(x=>x.id===t.dataset.toggle); await updateDoc(doc(db,"sessions",s.id),{open:!s.open}); loadSessionsAdmin(); }
-  if(t.dataset.togglechat){ const s=allSessions.find(x=>x.id===t.dataset.togglechat); const nv=!s.chatOpen; await updateDoc(doc(db,"sessions",s.id),{chatOpen:nv}); if(nv) sendPush("💬 Biseda u hap", (s.title||"Trajnimi")+" – hyni në faqe dhe shkruani me kolegët"); loadSessionsAdmin(); }
+  if(t.dataset.togglechat){ const s=allSessions.find(x=>x.id===t.dataset.togglechat); const nv=!s.chatOpen; await updateDoc(doc(db,"sessions",s.id),{chatOpen:nv}); loadSessionsAdmin(); }
   if(t.dataset.toggleeval){ const s=allSessions.find(x=>x.id===t.dataset.toggleeval); await updateDoc(doc(db,"sessions",s.id),{evalOpen:!s.evalOpen}); loadSessionsAdmin(); }
   if(t.dataset.delses && confirm("Të fshihet trajnimi? Prezencat e tij NUK fshihen automatikisht; përdor butonin \"Fshi prezencat e trajnimit\" te lista e prezencës.")){ await deleteDoc(doc(db,"sessions",t.dataset.delses)); loadSessionsAdmin(); }
 });
@@ -1163,7 +1160,6 @@ $("#matForm").addEventListener("submit", async e => {
     const mTitleVal = $("#mTitle").value.trim();
     await addDoc(collection(db,"materials"),{title:mTitleVal,month:$("#mMonth").value,url,topic:$("#mTopic").value.trim(),desc:$("#mDesc").value.trim(),createdMs:Date.now()});
     $("#matForm").reset(); flash($("#mMsg"),"Materiali u shtua.","ok");
-    sendPush("📎 Material i ri", mTitleVal);
     await fetchMaterials(); renderAdminMaterials();
   }catch(err){ console.error(err); flash($("#mMsg"),"Gabim: "+(err.code||err.message),"err"); }
 });
@@ -1551,21 +1547,6 @@ $("#notifBtn")?.addEventListener("click", async () => {
     }catch(err){ console.error("Njoftimet:", err); alert("Gabim: " + ((err && err.message) || err)); }
   });
 });
-
-/* Thirret pas çdo trajnimi/materiali të ri, dërgon njoftimin përmes
-   mini-shërbimit falas në Cloudflare Workers (mban të fshehtë çelësin e OneSignal). */
-async function sendPush(title, body){
-  if(!PUSH_WORKER_URL || PUSH_WORKER_URL.startsWith("ZËVENDËSO")) return;
-  try{
-    const r = await fetch(PUSH_WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Shared-Secret": PUSH_SHARED_SECRET },
-      body: JSON.stringify({ title, body }),
-    });
-    const t = await r.text();
-    if(!r.ok) console.error("Push: gabim", r.status, t); else console.log("Push OK:", t);
-  }catch(err){ console.error("Dërgimi i njoftimit dështoi:", err); }
-}
 
 /* ---------- Start ---------- */
 loadOpenSessions().then(verifyAttDone);
